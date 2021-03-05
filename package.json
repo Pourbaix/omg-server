@@ -1,0 +1,19 @@
+{
+  "name": "omgserver",
+  "version": "0.0.1",
+  "description": "Oh My Glucose platform server",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/louisBrochet/omgServer.git"
+  },
+  "author": "Louis Brochet",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/louisBrochet/omgServer/issues"
+  },
+  "homepage": "https://github.com/louisBrochet/omgServer#readme"
+}
