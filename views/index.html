@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+
+        <!-- Liver Services -->
+        <div>
+            
+            <!-- Title Services-->
+            <div class="row mb-3 ml-2">
+                <h1 class="h4 mb-0 text-gray-800">Liver Services</h1>
+            </div>
+
+            <!-- Cards -->
+            <div class="row d-sm-flex">
+                
+                <!-- Collapsible card-->
+                <div style="width: 18rem;" class="card border-bottom-success shadow p-0 h-100 ml-4 mb-4">
+                    <!-- card header -->
+                    <a href="#collapseCardExample" class="card-body bg-white pb-2" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapseCardExample">
+                        <div class="row no-gutters align-items-center justify-content-between mb-2">
+                            <div class="mr-2">
+                                <div class="h5 font-weight-bold text-dark mb-1">Liver Unit</div>
+                                <div class="mb-0 text-uppercase text-success">active</div>
+                            </div>
+                            <div class="ml-3">
+                                <i class="fas fa-microchip fa-3x text-success"></i>
+                            </div>
+                        </div>
+                        <div class="d-sm-flex justify-content-center">
+                            <div>Version 1.2</div>
+                        </div>
+                    </a>
+                    <!-- Card Content - Collapse -->
+                    <div class="collapse" id="collapseCardExample">
+                        <div class="card-body d-sm-flex  justify-content-around">
+                            <button type="button" class="btn btn-primary">Train</button>
+                            <button type="button" class="btn btn-warning">Versions</button>
+                            <button type="button" class="btn btn-danger">Stop</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Collapsible card-->
+                <div style="width: 18rem;" class="card border-bottom-success shadow p-0 h-100 ml-4 mb-4">
+                    <!-- card header -->
+                    <a href="#collapseCardExample1" class="card-body bg-white pb-2" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapseCardExample1">
+                        <div class="row no-gutters align-items-center justify-content-between mb-2">
+                            <div class="mr-2">
+                                <div class="h5 font-weight-bold text-dark mb-1">Blood Pool Unit</div>
+                                <div class="mb-0 text-uppercase text-success">active</div>
+                            </div>
+                            <div class="ml-3">
+                                <i class="fas fa-microchip fa-3x text-success"></i>
+                            </div>
+                        </div>
+                        <div class="d-sm-flex justify-content-center">
+                            <div>Version 1.2</div>
+                        </div>
+                    </a>
+                    <!-- Card Content - Collapse -->
+                    <div class="collapse" id="collapseCardExample1">
+                        <div class="card-body d-sm-flex  justify-content-around">
+                            <button type="button" class="btn btn-primary">Train</button>
+                            <button type="button" class="btn btn-warning">Versions</button>
+                            <button type="button" class="btn btn-danger">Stop</button>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+        </div>
+
+
+    </div>
+{% endblock %}
