@@ -5,8 +5,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="AI server control Web application">
-    <meta name="author" content="">
+    <meta name="description" content="Oh My Glucose Web app">
+    <meta name="author" content="Louis brochet">
 
     <title>Oh My Glucose</title>
 
@@ -17,9 +17,9 @@
         rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
-
-    <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="shortcut icon">
+    <link href="/css/sb-admin-2.min.css" rel="stylesheet" type="text/css">
+    <link href="/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="/img/favicon.ico" rel="shortcut icon">
 
 </head>
 <body id="page-top">
@@ -32,55 +32,50 @@
             <!-- Sidebar - Brand -->
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
                 <div class="sidebar-brand-icon">
-                    <i class="fas fa-brain"></i>
+                    <i class="fas fa-chart-area"></i>
                 </div>
-                <div class="sidebar-brand-text mx-3">AI Server</div>
+                <div class="sidebar-brand-text mx-3">OMG</div>
             </a>
 
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
+            <!-- Nav Item - home -->
             <li class="nav-item active">
-                <a class="nav-link" href="index.html">
-                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
+                <a class="nav-link" href="/index">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span></a>
             </li>
 
             <!-- Divider -->
             <hr class="sidebar-divider">
-
-            <!-- Heading -->
+            <!-- Heading charts-->
             <div class="sidebar-heading">
-                Addons
+                Charts
             </div>
-
-            <!-- Nav Item - Pages Collapse Menu -->
+            <!-- Nav Item - Chart -->
             <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages"
-                    aria-expanded="true" aria-controls="collapsePages">
-                    <i class="fas fa-fw fa-folder"></i>
-                    <span>Pages</span>
-                </a>
-                <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Login Screens:</h6>
-                        <a class="collapse-item" href="login.html">Login</a>
-                        <a class="collapse-item" href="register.html">Register</a>
-                        <a class="collapse-item" href="forgot-password.html">Forgot Password</a>
-                        <div class="collapse-divider"></div>
-                        <h6 class="collapse-header">Other Pages:</h6>
-                        <a class="collapse-item" href="404.html">404 Page</a>
-                        <a class="collapse-item" href="blank.html">Blank Page</a>
-                    </div>
-                </div>
+                <a class="nav-link" href="/chartsByTag">
+                    <i class="fas fa-fw fa-tag"></i>
+                    <span>by Tag</span></a>
             </li>
-
-            <!-- Nav Item - Charts -->
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+            <!-- Heading tools-->
+            <div class="sidebar-heading">
+                Tools
+            </div>
+            <!-- Nav Item - upload data -->
+            <li class="nav-item">
+                <a class="nav-link" href="/upload">
+                    <i class="fas fa-fw fa-file-upload"></i>
+                    <span>Upload data</span></a>
+            </li>
+            <!-- Nav Item - tag managmement -->
             <li class="nav-item">
                 <a class="nav-link">
-                    <i class="fas fa-fw fa-chart-area"></i>
-                    <span>Charts</span></a>
+                    <i class="fas fa-fw fa-tags"></i>
+                    <span>Tags manager</span></a>
             </li>
 
         </ul>
@@ -101,7 +96,7 @@
                     </button>
 
                     <!-- Topbar Title -->
-                    <h1 class="nav-item h3 mb-0 text-gray-800">Dashboard</h1>
+                    <h1 class="nav-item h3 mb-0 text-gray-800">Home</h1>
 
                     <!-- Topbar Account -->
                     <div class="nav-item dropdown no-arrow ">
@@ -109,7 +104,7 @@
                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <span class="mr-2 d-none d-lg-inline text-gray-600">Administrator</span>
                             <img class="img-profile rounded-circle"
-                                src="{{ url_for('static', filename='img/undraw_profile.svg') }}">
+                                src="/img/undraw_profile.svg">
                         </a>
                         <!-- Dropdown - User Information -->
                         <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
@@ -173,27 +168,20 @@
                 <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="login.html">Logout</a>
+                    <a class="btn btn-primary" href="/login">Logout</a>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Bootstrap core JavaScript-->
-    <script src="./static/vendor/jquery/jquery.min.js"></script>
-    <script src="./static/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-
+    <script src="/vendor/jquery/jquery.min.js"></script>
+    <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <!-- Core plugin JavaScript-->
-    <script src="./static/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
-
+    <script src="/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <!-- Charts JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.js" integrity="sha512-zO8oeHCxetPn1Hd9PdDleg5Tw1bAaP0YmNvPY8CwcRyUk7d7/+nyElmFrB6f7vg4f7Fv4sui1mcep8RIEShczg==" crossorigin="anonymous"></script>
     <!-- Custom scripts for all pages-->
-    <script src="./static/js/sb-admin-2.min.js') }}"></script>
-
-    <!-- Page level plugins -->
-    <script src="{{ url_for('static', filename='vendor/chart.js/Chart.min.js') }}"></script>
-
-    <!-- Page level custom scripts -->
-    <script src="{{ url_for('static', filename='js/demo/chart-area-demo.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>
+    <script src="/js/sb-admin-2.min.js"></script>
 </body>
 </html>

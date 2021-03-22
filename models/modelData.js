@@ -1,6 +1,6 @@
 const seq = require("../config/config");
-const Sequelize = seq.Sequelize, Model = seq.Model, sequelize = seq.sequelize, DataTypes = seq.DataTypes;
-const User = require("./modelUser");
+const Sequelize = seq.Sequelize, sequelize = seq.sequelize, DataTypes = seq.DataTypes;
+const User = require("./modelUser"), Tag = require('./modelTag');
 
 const Data = sequelize.define('data',{
     id: {
@@ -28,6 +28,6 @@ const Data = sequelize.define('data',{
 }, {
     sequelize,
     modelName: 'data',
-});
+})
 
 module.exports = Data;

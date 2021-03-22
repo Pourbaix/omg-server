@@ -1,4 +1,5 @@
 *.idea
-.idea
+/.idea/
 .env
-node_modules/
+/node_modules/
+/tmp/
