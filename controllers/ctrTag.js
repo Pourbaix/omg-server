@@ -1,37 +1,62 @@
 const Tag = require("../models/modelTag");
 const seq = require("../config/config");
-const Sequelize = seq.Sequelize, sequelize = seq.sequelize;
+const sequelize = seq.sequelize;
+const passport = require("../app");
 
-exports.getOne = function (req, res) {
-    Tag.findAll({
-        where: {
-            id: req.params.id
-        }
-    })
-        .then(results => res.json(results[0]))
-        .catch(error => res.status(500).json(error));
-};
+//////////////////////////////////////////////////////
+/////////////// Routes controllers ///////////////////
+//////////////////////////////////////////////////////
 
 exports.postOne = function (req, res) {
     Tag.create({
         name: req.body.tag,
         startDatetime: req.body.startDatetime,
         endDatetime: req.body.endDatetime,
-        userId: req.body.userId
+        userId: req.session.passport.user.id
+    }).then(() => {
+        return res.status(200).json("ok");
+    }).catch((err) => {
+        return res.status(500).json("something wrong happened");
     });
-    return res.status(200).json("ok");
+
 }
+
+exports.getNamesFromUserId = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user){
+            if (err) { return res.json({status: 'Authentication error', message: err}); }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            Tag.findAll({
+                where: {
+                    userId: user.id
+                },
+                attributes: [[sequelize.fn('DISTINCT', sequelize.col('name')), 'name']]
+            }).then((data) => {
+                let tags = [];
+                data.forEach((tag) => tags.push(tag['name']));
+                res.status(200).send(tags);
+            })
+        })(req, res);
+    }catch (e) {
+        res.status(500).send(e);
+    }
+};
+
+//////////////////////////////////////////////////////
+/////////// controllers functions helpers ////////////
+//////////////////////////////////////////////////////
 
 exports.getTagsFromName = async function (tagName, userId) {
     try {
-        const tags = await Tag.findAll({
+        return await Tag.findAll({
             attributes: ['startDatetime'],
             where: {
                 userId: userId,
                 name: tagName
             }
-        })
-        return tags;
+        });
     } catch (error) {
         return "getTagsFromName request error";
     }

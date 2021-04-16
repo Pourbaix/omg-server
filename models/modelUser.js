@@ -16,6 +16,18 @@ const User = sequelize.define('user',{
         type: DataTypes.STRING,
         allowNull: false
     },
+    email:{
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    password:{
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    salt:{
+        type: DataTypes.STRING,
+        allowNull: true
+    }
 }, {
     sequelize,
     modelName: 'user',

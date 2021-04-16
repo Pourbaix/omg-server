@@ -5,8 +5,16 @@ const multer  = require('multer');
 const upload = multer({dest: 'tmp/csv/'});
 
 // Get one value
-router.get('/one', (req, res)  => ctrData.getOne(req, res));
+router.get('/one', ctrData.getOne);
 // Upload file
-router.post('/file', upload.single('file'), (req, res) => ctrData.postFile(req, res));
+router.post('/file', upload.single('file'), ctrData.postFile);
+
+router.get('/chart', ctrData.chart)
 
 module.exports = router;
+
+function isLoggedIn(req, res, next) {
+    if (req.isAuthenticated())
+        return next();
+    return res.status(401).send({status: 'error', message: "You're not connected"});
+}

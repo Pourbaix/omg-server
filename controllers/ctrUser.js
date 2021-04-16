@@ -1,13 +1,87 @@
 const User = require("../models/modelUser");
-const seq = require("../config/config");
-const Sequelize = seq.Sequelize, sequelize = seq.sequelize;
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const passport = require("../app");
 
-exports.getOne = function(req, res) {
-    User.findAll({
-        where: {
-            id: req.params.id
+//////////////////////////////////////////////////////
+/////////////// Routes controllers ///////////////////
+//////////////////////////////////////////////////////
+
+exports.postRegister = async function(req, res){
+
+    if (!isValidPassword(req.body.password)) {
+        return res.json({status: 'error', message: 'Password must be 8 or more characters.'});
+    }
+    if (!isValidEmail(req.body.email)) {
+        return res.json({status: 'error', message: 'Email address not formed correctly.'});
+    }
+
+    let salt = crypto.randomBytes(64).toString('hex');
+    let password = crypto.pbkdf2Sync(req.body.password, salt, 10000, 64, 'sha512').toString('base64');
+
+    let user = await User.findOne(
+        { where: {
+                email: req.body.email
+            }
+        });
+    if (user){
+        return res.json({status: 'error', message: 'That email is already taken' });
+    }
+
+    try {
+        let user = await User.create({
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            email: req.body.email,
+            password: password,
+            salt: salt
+        });
+        res.status(200).json({status: 'account created', user: user})
+    } catch (err) {
+        return res.json({status: 'error', message: 'Email address already exists.'});
+    }
+}
+
+exports.postSignin = async function(req, res){
+    try {
+        passport.authenticate('local-signin', {session: false}, function(err, user) {
+            if (err) { return res.json({status: 'error', message: err}); }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect email and/or password"});
+            }
+            req.logIn(user, {session: false}, function(err) {
+                if (err) {
+                    return res.json({status: 'error login', message: err});
+                }
+                const token = jwt.sign(user.dataValues, 'jwt1234', {expiresIn: "2h"});
+                return res.json({status: 'ok', message: "connected", token: token});
+            });
+        })(req, res);
+    } catch (e){
+        res.status(500).json(e);
+    }
+}
+
+exports.logout = function (req, res){
+    req.session.destroy(function(err) {
+        if (err){
+            return res.status(500).json({status: 'error', message: err})
         }
-    })
-        .then(results => res.json(results[0]))
-        .catch(error => res.status(500).json(error));
-};
+        return res.status(200).json({status: 'ok', message:'deconnected'});
+    });
+}
+
+//////////////////////////////////////////////////////
+/////////// controllers functions helpers ////////////
+//////////////////////////////////////////////////////
+
+function isValidPassword(password) {
+    return password.length >= 8;
+
+}
+
+//uses a regex to check if email is valid
+function isValidEmail(email) {
+    let re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+}

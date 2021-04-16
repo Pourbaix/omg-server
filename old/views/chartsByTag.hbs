@@ -1,0 +1,16 @@
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- Title Services-->
+    <div class="row align-items-center">
+        <form class="ml-4 mr-4">
+            <div class="row">
+                <label for="tagsList">Choose a tag :</label>
+                <select class="form-control" id="tagsList" name="tagsList" onchange="showChartOfTag(document.getElementById('textChange'), this.value)">
+                    {{#each tags}}
+                        <option value="{{this.name}}">{{this.name}}</option>
+                    {{/each}}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>

@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const ctrTag = require("../controllers/ctrTag");
 
-router.get("/one", (req, res)  => ctrTag.getOne(req, res));
+router.post("/one", ctrTag.postOne);
 
-router.post("/one", ((req, res) => ctrTag.postOne(req, res)));
+router.get("/all", ctrTag.getNamesFromUserId);
 
 module.exports = router;
