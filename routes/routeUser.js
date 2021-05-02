@@ -7,6 +7,6 @@ router.post('/register', ctrUser.postRegister);
 
 router.post('/signin', ctrUser.postSignin);
 
-router.get('/logout', passport.authenticate('local-jwt'), ctrUser.logout);
+router.get('/verify', ctrUser.testKey)
 
 module.exports = router;

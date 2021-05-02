@@ -44,7 +44,9 @@ app.use(bodyParser.json({limit: '50mb', extended: true}));
 const seq = require("./config/config");
 seq.sequelize.sync()
     .then(() => {
-        console.log("--\nDatabase synchronized\n--")
+        // seq.sequelize.query('ALTER TABLE data DROP CONSTRAINT id');
+        // seq.sequelize.query('ALTER TABLE data ADD CONSTRAINT pk_user PRIMARY KEY (datetime, userId)');
+        console.log("--\nDatabase synchronized\n--");
     })
     .catch((error) => console.log("An error occurred while Synchronization.\n", error));
 //////////////////////////////////////////////////////

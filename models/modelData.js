@@ -7,14 +7,19 @@ const Data = sequelize.define('data',{
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         allowNull: false,
-        primaryKey: true
+        primaryKey: false
     },
     datetime:{
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
+        primaryKey: true
     },
     glucose:{
         type: DataTypes.INTEGER(3),
+        allowNull: false
+    },
+    pumpSN: {
+        type: DataTypes.TEXT,
         allowNull: false
     },
     userId:{
@@ -23,7 +28,8 @@ const Data = sequelize.define('data',{
         references: {
             model: User,
             key: 'id'
-        }
+        },
+        primaryKey: true
     }
 }, {
     sequelize,

@@ -21,6 +21,31 @@ exports.postOne = function (req, res) {
 
 }
 
+exports.getRecentTagsFromUserId = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user){
+            if (err) { return res.json({status: 'Authentication error', message: err}); }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            Tag.findAll({
+                where: {
+                    userId: user.id
+                },
+                limit: 8,
+                order: sequelize.literal('startDatetime DESC'),
+                attributes: [[sequelize.fn('DISTINCT', sequelize.col('name')), 'name']]
+            }).then((data) => {
+                let tags = [];
+                data.forEach((tag) => tags.push(tag['name']));
+                res.status(200).json(tags);
+            })
+        })(req, res);
+    }catch (e) {
+        res.status(500).json(e);
+    }
+}
+
 exports.getNamesFromUserId = function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user){
@@ -36,11 +61,11 @@ exports.getNamesFromUserId = function (req, res) {
             }).then((data) => {
                 let tags = [];
                 data.forEach((tag) => tags.push(tag['name']));
-                res.status(200).send(tags);
+                res.status(200).json(tags);
             })
         })(req, res);
     }catch (e) {
-        res.status(500).send(e);
+        res.status(500).json(e);
     }
 };
 

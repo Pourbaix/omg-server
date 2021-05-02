@@ -5,5 +5,5 @@ module.exports = {
     password: process.env.DB_PASSWORD,
     dialect: 'mariadb',
     database: process.env.DB_DATABASE,
-    logging: false
+    // logging: false
 };

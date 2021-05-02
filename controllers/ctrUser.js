@@ -8,12 +8,11 @@ const passport = require("../app");
 //////////////////////////////////////////////////////
 
 exports.postRegister = async function(req, res){
-
     if (!isValidPassword(req.body.password)) {
-        return res.json({status: 'error', message: 'Password must be 8 or more characters.'});
+        return res.status(400).json({status: 'error', message: 'Password must be 8 or more characters.'});
     }
     if (!isValidEmail(req.body.email)) {
-        return res.json({status: 'error', message: 'Email address not formed correctly.'});
+        return res.status(400).json({status: 'error', message: 'Email address not formed correctly.'});
     }
 
     let salt = crypto.randomBytes(64).toString('hex');
@@ -25,7 +24,7 @@ exports.postRegister = async function(req, res){
             }
         });
     if (user){
-        return res.json({status: 'error', message: 'That email is already taken' });
+        return res.status(400).json({status: 'error', message: 'That email is already taken' });
     }
 
     try {
@@ -36,9 +35,9 @@ exports.postRegister = async function(req, res){
             password: password,
             salt: salt
         });
-        res.status(200).json({status: 'account created', user: user})
+        res.status(200).json({status: 'ok', message: 'Account created !'})
     } catch (err) {
-        return res.json({status: 'error', message: 'Email address already exists.'});
+        return res.status(400).json({status: 'error', message: 'Email address already exists.'});
     }
 }
 
@@ -51,7 +50,7 @@ exports.postSignin = async function(req, res){
             }
             req.logIn(user, {session: false}, function(err) {
                 if (err) {
-                    return res.json({status: 'error login', message: err});
+                    return res.json({status: 'error', message: err});
                 }
                 const token = jwt.sign(user.dataValues, 'jwt1234', {expiresIn: "2h"});
                 return res.json({status: 'ok', message: "connected", token: token});
@@ -62,13 +61,20 @@ exports.postSignin = async function(req, res){
     }
 }
 
-exports.logout = function (req, res){
-    req.session.destroy(function(err) {
-        if (err){
-            return res.status(500).json({status: 'error', message: err})
-        }
-        return res.status(200).json({status: 'ok', message:'deconnected'});
-    });
+exports.testKey = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            return res.status(200).json("ok");
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
 }
 
 //////////////////////////////////////////////////////

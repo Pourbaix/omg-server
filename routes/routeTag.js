@@ -6,4 +6,6 @@ router.post("/one", ctrTag.postOne);
 
 router.get("/all", ctrTag.getNamesFromUserId);
 
+router.get("/recent", ctrTag.getRecentTagsFromUserId);
+
 module.exports = router;
