@@ -8,16 +8,26 @@ const passport = require("../app");
 //////////////////////////////////////////////////////
 
 exports.postOne = function (req, res) {
-    Tag.create({
-        name: req.body.tag,
-        startDatetime: req.body.startDatetime,
-        endDatetime: req.body.endDatetime,
-        userId: req.session.passport.user.id
-    }).then(() => {
-        return res.status(200).json("ok");
-    }).catch((err) => {
-        return res.status(500).json("something wrong happened");
-    });
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user){
+            if (err) { return res.status(500).json("Authentication error")}
+            if (!user) { return res.status(401).json("Incorrect token")}
+            Tag.create({
+                name: req.body.tag,
+                startDatetime: req.body.startDatetime,
+                endDatetime: req.body.endDatetime,
+                userId: user.id
+            }).then(() => {
+                console.log('ok');
+                return res.status(200).json("ok");
+            }).catch((err) => {
+                return res.status(500).json("something wrong happened");
+            });
+        })(req, res);
+    }catch (e) {
+        res.status(500).json(e);
+    }
+
 
 }
 

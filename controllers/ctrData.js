@@ -9,17 +9,13 @@ const passport = require("../app");
 //////////////////////////////////////////////////////
 /////////////// Routes controllers ///////////////////
 //////////////////////////////////////////////////////
-
-exports.getOne = function (req, res) {
-    Data.findAll({
-        where: {
-            id: req.params.id
-        }
-    })
-        .then(results => res.json(results[0]))
-        .catch(error => res.status(500).json(error));
-};
-
+/**
+ *  Chart route controller. retrieves and formats data for the ChartBasic chart
+ *
+ * @param req
+ * @param res
+ * @returns {Promise<void>}
+ */
 exports.chart = async function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, async function (err, user) {
@@ -44,15 +40,21 @@ exports.chart = async function (req, res) {
         res.status(500).json(e);
     }
 }
-
+/**
+ * Import Data file Controller
+ *
+ * @param req
+ * @param res
+ */
 exports.postFile = function (req, res) {
     try {
+        // Authentification strategy
         passport.authenticate('local-jwt', {session: false}, function (err, user) {
             if (err) {
                 return res.json({status: 'Authentication error', message: err});
             }
             if (!user) {
-                return res.json({status: 'error', message: "Incorrect token"});
+                return res.json({status: 'error', message: 'Incorrect token'});
             }
             if (!req.file) {
                 return res.status(400).json('No files were uploaded.');
@@ -61,6 +63,13 @@ exports.postFile = function (req, res) {
                 return res.status(400).json('Only CSV files are allowed.');
             }
             getFromMiniMedPump(req, res, user);
+            // if (!"modelSensor" in req.query) {
+            //     return res.json({status: 'error', message: "missing modelSensor"});
+            // }
+            // if (req.query.modelSensor === 'minimed') {
+            //     getFromMiniMedPump(req, res, user);
+            // }
+
         })(req, res);
     } catch (e) {
         res.status(500).json(e);
@@ -70,7 +79,12 @@ exports.postFile = function (req, res) {
 //////////////////////////////////////////////////////
 /////////// controllers functions helpers ////////////
 //////////////////////////////////////////////////////
-
+/**
+ *  Minimed import method
+ * @param req
+ * @param res
+ * @param user
+ */
 function getFromMiniMedPump(req, res, user) {
     const fileRows = [];
     // open uploaded file
@@ -97,7 +111,7 @@ function getFromMiniMedPump(req, res, user) {
                     }
                 }
                 if (((typeof row[colDate]).toString() === "string") && ((typeof row[colTime]).toString() === "string") && ((typeof row[colGlucose]).toString() === "string")) {
-                    if ((row[colDate].includes('/')) && (row[colTime].includes(':') && (row[colGlucose].length > 3))) {
+                    if ((row[colDate].includes('/')) && (row[colTime].includes(':') && (row[colGlucose].length >= 2))) {
                         dataObj.glucose.push(row[colGlucose]);
                         dataObj.date.push(row[colDate]);
                         dataObj.time.push(row[colTime]);
@@ -105,21 +119,22 @@ function getFromMiniMedPump(req, res, user) {
                     }
                 }
             });
+
             try {
-                console.log(dataObj.time)
                 // dataObj.date.length
-                for (let i = 0; i < 10; i++) {
-                    let dbFormatDatetime = parseDatetime(dataObj.date[i], dataObj.time[i])
+                for (let i = 0; i < dataObj.date.length; i++) {
+                    // let dbFormatDatetime = parseDatetime(dataObj.date[i], dataObj.time[i]);
+                    let dbFormatDatetime = new Date(dataObj.date[i].substring(0, 4), dataObj.date[i].substring(5, 7) -1, dataObj.date[i].substring(8, 10), dataObj.time[i].split(':')[0], dataObj.time[i].split(':')[1]);
                     Data.create({
-                            datetime: dbFormatDatetime,
-                            glucose: parseInt(dataObj.glucose[i]),
-                            pumpSN: dataObj.pumpSN[i],
-                            userId: user.id
-                        });
+                        datetime: dbFormatDatetime,
+                        glucose: parseInt(dataObj.glucose[i]),
+                        pumpSN: dataObj.pumpSN[i],
+                        userId: user.id
+                    });
                 }
                 res.status(200).json('ok');
             } catch (e) {
-                res.status(500).json('An error occured while insert data');
+                res.status(500).json('An error occured while insert data' + e);
             }
         });
 }
@@ -157,8 +172,8 @@ function findInFileRows(fileRows, start) {
 }
 
 function parseDatetime(date, time) {
-    let floorTime = time.split(':')[0] + ':' + Math.floor(time.split(':')[1] / 5) * 5;
-    return date.substring(0, 4) + "-" + date.substring(5, 7) + "-" + date.substring(8, 10) + "T" + floorTime + "Z"
+    console.log(new Date(date.substring(0, 4), date.substring(5, 7), date.substring(8, 10), time.split(':')[0], Math.floor(time.split(':')[1] / 5) * 5));
+    return new Date(date.substring(0, 4), date.substring(5, 7), date.substring(8, 10), time.split(':')[0], Math.floor(time.split(':')[1] / 5) * 5);
 }
 
 // async function getAllData(tags, userId) {

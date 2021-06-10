@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const ctrUser = require("../controllers/ctrUser");
-const passport = require("../app")
 
-router.post('/register', ctrUser.postRegister);
+router.post('/signup', ctrUser.postSignup);
 
 router.post('/signin', ctrUser.postSignin);
 

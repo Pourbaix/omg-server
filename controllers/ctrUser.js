@@ -7,7 +7,7 @@ const passport = require("../app");
 /////////////// Routes controllers ///////////////////
 //////////////////////////////////////////////////////
 
-exports.postRegister = async function(req, res){
+exports.postSignup = async function(req, res){
     if (!isValidPassword(req.body.password)) {
         return res.status(400).json({status: 'error', message: 'Password must be 8 or more characters.'});
     }
@@ -65,12 +65,14 @@ exports.testKey = async function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user) {
             if (err) {
-                return res.json({status: 'Authentication error', message: err});
+                return res.status(500).json("Authentication error");
             }
-            if (!user) {
-                return res.json({status: 'error', message: "Incorrect token"});
+            else if (!user) {
+                return res.status(401).json("Incorrect token");
             }
-            return res.status(200).json("ok");
+            else {
+                return res.status(200).json("ok");
+            }
         })(req, res);
     } catch (e) {
         res.status(500).json(e);
