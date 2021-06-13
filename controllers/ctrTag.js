@@ -7,6 +7,12 @@ const passport = require("../app");
 /////////////// Routes controllers ///////////////////
 //////////////////////////////////////////////////////
 
+/**
+ *  post one tag route controller. insert an activation tag.
+ *
+ * @param req
+ * @param res
+ */
 exports.postOne = function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user){
@@ -27,10 +33,14 @@ exports.postOne = function (req, res) {
     }catch (e) {
         res.status(500).json(e);
     }
-
-
 }
 
+/**
+ * get recent tags route controller. Retrieve 8 most recent tags (based on their activation date) of a user.
+ *
+ * @param req
+ * @param res
+ */
 exports.getRecentTagsFromUserId = function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user){
@@ -56,6 +66,12 @@ exports.getRecentTagsFromUserId = function (req, res) {
     }
 }
 
+/**
+ * get all tags route controller. Retrieve all the tags of a user
+ *
+ * @param req
+ * @param res
+ */
 exports.getNamesFromUserId = function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user){
@@ -83,6 +99,13 @@ exports.getNamesFromUserId = function (req, res) {
 /////////// controllers functions helpers ////////////
 //////////////////////////////////////////////////////
 
+/**
+ * Retrieve all activation of a tag.
+ *
+ * @param tagName : string
+ * @param userId : string
+ * @return {Promise<*|string>} : object with all activations of a tag
+ */
 exports.getTagsFromName = async function (tagName, userId) {
     try {
         return await Tag.findAll({

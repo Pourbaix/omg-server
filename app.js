@@ -12,20 +12,6 @@ app.use(cors(corsOptions));
 //////////////////////////////////////////////////////
 
 ////////////////// Passport //////////////////////////
-// const session = require('express-session');
-//
-// const expireDate = new Date(Date.now() + 3600000);
-//
-// app.use(session({
-//     resave: true,
-//     saveUninitialized: true,
-//     secret: process.env.SESSION_SECRET,
-//     cookie: { expires: expireDate },
-//     httpOnly: true,  // dont let browser javascript access cookie ever
-//     secure: true, // only use cookie over https
-//     ephemeral: true // delete this cookie while browser close
-// }));
-
 const passport = require("./config/passport")
 
 app.use(passport.initialize({session: false}));

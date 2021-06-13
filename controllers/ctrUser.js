@@ -7,6 +7,13 @@ const passport = require("../app");
 /////////////// Routes controllers ///////////////////
 //////////////////////////////////////////////////////
 
+/**
+ * post signup route controller. manages the creation of an account.
+ *
+ * @param req
+ * @param res
+ * @return {Promise<*>} : Response
+ */
 exports.postSignup = async function(req, res){
     if (!isValidPassword(req.body.password)) {
         return res.status(400).json({status: 'error', message: 'Password must be 8 or more characters.'});
@@ -41,6 +48,13 @@ exports.postSignup = async function(req, res){
     }
 }
 
+/**
+ * post signin route controller. manages the connection of a user
+ *
+ * @param req
+ * @param res
+ * @return {Promise<void>}
+ */
 exports.postSignin = async function(req, res){
     try {
         passport.authenticate('local-signin', {session: false}, function(err, user) {
@@ -61,6 +75,13 @@ exports.postSignin = async function(req, res){
     }
 }
 
+/**
+ * verify route controller. Check if the given token is valid.
+ *
+ * @param req
+ * @param res
+ * @return {Promise<void>}
+ */
 exports.testKey = async function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user) {

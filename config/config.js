@@ -1,5 +1,8 @@
+//////////////////////////////////////////////////////
+////////// Sequelize initializing file ///////////////
+//////////////////////////////////////////////////////
 const {Sequelize, Model, DataTypes, QueryInterface} = require("sequelize");
-const db = require("./db");
+const db = require("./db"); // database infos file
 const sequelize = new Sequelize(db);
 
 sequelize.authenticate()

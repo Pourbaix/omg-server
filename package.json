@@ -35,9 +35,7 @@
     "passport-local": "^1.0.0",
     "sequelize": "^6.5.0",
     "serve-static": "^1.14.1",
-    "uuid": "^8.3.2"
-  },
-  "devDependencies": {
+    "uuid": "^8.3.2",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0"
   }

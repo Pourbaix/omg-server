@@ -33,7 +33,6 @@ exports.chart = async function (req, res) {
                 'datasetsLabel': Object.keys(allData),
                 'chartData': chartFormatAllData(addRelativeToAllData(allData))
             };
-            // let response = chartFormatAllData(addRelativeToAllData(await getAllDataFromTag(await ctrTag.getTagsFromName(req.query.tagName, user.id), user.id)));
             res.status(200).json(response);
         })(req, res);
     } catch (e) {
@@ -81,9 +80,10 @@ exports.postFile = function (req, res) {
 //////////////////////////////////////////////////////
 /**
  *  Minimed import method
+ *
  * @param req
  * @param res
- * @param user
+ * @param user : object of a user context
  */
 function getFromMiniMedPump(req, res, user) {
     const fileRows = [];
@@ -139,6 +139,13 @@ function getFromMiniMedPump(req, res, user) {
         });
 }
 
+/**
+ * find the column number of time, date and glucose in the filerows array at start line.
+ *
+ * @param fileRows : array of the csv file
+ * @param start : line number where to start
+ * @return {{colTime: number, pumpSN: string, colGlucose: number, colDate: number}}
+ */
 function findInFileRows(fileRows, start) {
     let colDate = -1, colTime = -1, colGlucose = -1, pumpSN = "";
     // Find column numbers and pump serial number
@@ -171,27 +178,13 @@ function findInFileRows(fileRows, start) {
     return {colDate, colTime, colGlucose, pumpSN};
 }
 
-function parseDatetime(date, time) {
-    console.log(new Date(date.substring(0, 4), date.substring(5, 7), date.substring(8, 10), time.split(':')[0], Math.floor(time.split(':')[1] / 5) * 5));
-    return new Date(date.substring(0, 4), date.substring(5, 7), date.substring(8, 10), time.split(':')[0], Math.floor(time.split(':')[1] / 5) * 5);
-}
-
-// async function getAllData(tags, userId) {
-//     let datetimeTag = {};
-//     for (let i = 0; i < Object.keys(tags).length; i++) {
-//         let datetime = tags[i].getDataValue('startDatetime').toISOString();
-//         let fromHours = parseInt(datetime.substring(11, 13)) - 1;
-//         fromHours = fromHours < 10 ? "0" + fromHours : fromHours;
-//         let toHours = parseInt(datetime.substring(11, 13)) + 3;
-//         toHours = toHours < 10 ? "0" + toHours : toHours;
-//         let fromDate = datetime.substring(0, 11) + fromHours + datetime.substring(13, datetime.length);
-//         let toDate = datetime.substring(0, 11) + toHours + datetime.substring(13, datetime.length);
-//         datetimeTag[datetime] = await findFromDateToDate(fromDate, toDate, userId);
-//     }
-//
-//     return datetimeTag;
-// }
-
+/**
+ * Retrieve all user's data according to the given tags.
+ *
+ * @param tags : object which contains all the activations of a tag
+ * @param userId : string
+ * @return {Promise<{}>} : object with all data
+ */
 async function getAllDataFromTag(tags, userId) {
     let datetimeTag = {};
     for (let i = 0; i < Object.keys(tags).length; i++) {
@@ -205,6 +198,14 @@ async function getAllDataFromTag(tags, userId) {
     return datetimeTag;
 }
 
+/**
+ * Retrieve data between two dates.
+ *
+ * @param fromDate : Date start
+ * @param toDate : Date end
+ * @param userId : string
+ * @return {Promise<*|string>} : object data
+ */
 async function findFromDateToDate(fromDate, toDate, userId) {
     try {
         const results = await Data.findAll({
@@ -226,6 +227,12 @@ async function findFromDateToDate(fromDate, toDate, userId) {
     }
 }
 
+/**
+ * modifies the data object by replacing the absolute dates by times relative to the activation of a tag
+ *
+ * @param realDatetimesTags : object
+ * @return {any} : relativeTimesTags object
+ */
 function addRelativeToAllData(realDatetimesTags) {
     let relativeTimesTags = JSON.parse(JSON.stringify(realDatetimesTags));
     Object.keys(relativeTimesTags).forEach((e) => {
@@ -239,31 +246,12 @@ function addRelativeToAllData(realDatetimesTags) {
     return relativeTimesTags;
 }
 
-// function chartFormatAllData(allData) {
-//     let chartData = [];
-//     for (let i = 0; i < Object.keys(allData).length; i++) {
-//         allData[Object.keys(allData)[i]].forEach((measure) => {
-//             let e = measure.relative
-//             let value = (e[0] + e.substring(1, e.length).split(':')[0] + e.substring(1, e.length).split(':')[1] + e.substring(1, e.length).split(':')[2]);
-//             let dataTab = [];
-//             for (let j = 0; j < Object.keys(allData).length; j++) {
-//                 if (i === j) {
-//                     dataTab[j] = measure.glucose;
-//                 } else
-//                     dataTab[j] = null;
-//             }
-//             chartData.push([value, dataTab]);
-//         });
-//     }
-//     chartData.sort(function (a, b) {
-//         return a[0] - b[0];
-//     })
-//     for (let i = 0; i < chartData.length; i++) {
-//         chartData[i][0] = chartData[i][0].substring(0, 3) + ':' + chartData[i][0].substring(3, 5) + ':' + chartData[i][0].substring(5, 7);
-//     }
-//     return chartData;
-// }
-
+/**
+ * manipulates the data of the all data object to facilitate the processing of the chart display in the web application.
+ *
+ * @param allData : object
+ * @return {*|[]} : object chart data
+ */
 function chartFormatAllData(allData) {
     let chartData = [];
     Object.keys(allData).forEach((dataSet) => chartData.push(allData[dataSet].map((e) => e.relative)));
@@ -285,6 +273,13 @@ function chartFormatAllData(allData) {
     return chartData;
 }
 
+/**
+ * Calculate the time between two dates
+ *
+ * @param eventDate : Date main
+ * @param realDate : Date relative
+ * @return {[]} : string with time difference between the two dates
+ */
 function dateDiff(eventDate, realDate) {
     let d = Math.abs(eventDate - realDate) / 1000;                           // delta
     let r = {};                                                                // result
@@ -310,7 +305,12 @@ function dateDiff(eventDate, realDate) {
     return tab;
 }
 
-
+/**
+ * sort datetimes of the xAxis
+ *
+ * @param xAxis : Array of datetimes
+ * @return {any[]} : Array of sorted datetimes
+ */
 function sortXaxis(xAxis) {
     for (let i = 0; i < xAxis.length; i++) {
         xAxis[i] = (xAxis[i][0] + xAxis[i].substring(1, xAxis[i].length).split(':')[0] + xAxis[i].substring(1, xAxis[i].length).split(':')[1] + xAxis[i].substring(1, xAxis[i].length).split(':')[2]);

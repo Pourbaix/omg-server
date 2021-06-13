@@ -1,3 +1,6 @@
+//////////////////////////////////////////////////////
+///////////// Passport config file ///////////////////
+//////////////////////////////////////////////////////
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const User = require("../models/modelUser");
@@ -14,6 +17,11 @@ passport.deserializeUser(function (user, done) {
     done(null, user);
 });
 
+/**
+ * local signin passport strategy. Check if the email and password match a user in the database.
+ *
+ * @return false if no match or a user context if match
+ */
 passport.use('local-signin', new LocalStrategy({
         usernameField: 'email',
         passwordField: 'password'
@@ -35,6 +43,11 @@ passport.use('local-signin', new LocalStrategy({
     }
 ));
 
+/**
+ * local-jwt Passport strategy. Check given token.
+ *
+ * @return user context if the given token is valid or error if not valid.
+ */
 passport.use('local-jwt', new JWTStrategy({
         jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
         secretOrKey: 'jwt1234'

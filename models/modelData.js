@@ -1,3 +1,7 @@
+//////////////////////////////////////////////////////
+////////// Sequelize Data model (table) //////////////
+//////////////////////////////////////////////////////
+
 const seq = require("../config/config");
 const Sequelize = seq.Sequelize, sequelize = seq.sequelize, DataTypes = seq.DataTypes;
 const User = require("./modelUser"), Tag = require('./modelTag');
