@@ -8,6 +8,18 @@ const upload = multer({dest: 'tmp/csv/'});
 router.post('/file', upload.single('file'), ctrData.postFile);
 
 // Retrieve data for chart display
-router.get('/chart', ctrData.chart)
+router.get('/chart', ctrData.chart);
+
+// Retrieve an array of the days that contain data
+router.get('/datadays', ctrData.getDataDays);
+
+// Retrieve an array of import names
+router.get('/importnames', ctrData.getImportNames);
+
+// Delete data of an import
+router.delete('/file', ctrData.deleteFile);
+
+// Delete all data of a user
+router.delete('/all', ctrData.deleteAll);
 
 module.exports = router;

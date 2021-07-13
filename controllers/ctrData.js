@@ -28,7 +28,21 @@ exports.chart = async function (req, res) {
             if (!"tagName" in req.query) {
                 return res.json({status: 'error', message: "missing tagName"});
             }
-            let allData = await getAllDataFromTag(await ctrTag.getTagsFromName(req.query.tagName, user.id), user.id);
+            if (!"fromTime" in req.query || !"toTime" in req.query){
+                return res.json({status: 'error', message: "missing time range"});
+            }
+            let fromToTime = [req.query.fromTime, req.query.toTime]
+
+            let fromToDate = null
+            if ("startDate" in req.query && "endDate" in req.query) {
+                fromToDate = [req.query.startDate, req.query.endDate];
+            }
+            let weekDays = []
+            if ("weekDays" in req.query) {
+                weekDays = req.query.weekDays.split("-").map(day => parseInt(day));
+            }
+
+            let allData = await getAllDataFromTag(await ctrTag.getTagsFromName(req.query.tagName, user.id, fromToDate, weekDays), user.id, fromToTime);
             let response = {
                 'datasetsLabel': Object.keys(allData),
                 'chartData': chartFormatAllData(addRelativeToAllData(allData))
@@ -55,26 +69,147 @@ exports.postFile = function (req, res) {
             if (!user) {
                 return res.json({status: 'error', message: 'Incorrect token'});
             }
+            console.log(req.body)
+            if (!req.body.sensorModel) {
+                return res.status(400).json('No sensor model in the request.');
+            }
+            if (!req.body.importName) {
+                return res.status(400).json('No import name in the request.');
+            }
             if (!req.file) {
-                return res.status(400).json('No files were uploaded.');
+                return res.status(400).json('No file were uploaded.');
             }
             if (req.file.originalname.split(".")[1] !== "csv") {
                 return res.status(400).json('Only CSV files are allowed.');
             }
-            getFromMiniMedPump(req, res, user);
-            // if (!"modelSensor" in req.query) {
-            //     return res.json({status: 'error', message: "missing modelSensor"});
-            // }
-            // if (req.query.modelSensor === 'minimed') {
-            //     getFromMiniMedPump(req, res, user);
-            // }
-
+            switch (req.body.sensorModel) {
+                case "minimed":
+                    getFromMiniMedPump(req, res, user, req.body.importName);
+                    break;
+                default:
+                    return res.status(400).json("Sensor model not implemented.");
+            }
         })(req, res);
     } catch (e) {
         res.status(500).json(e);
     }
 }
-
+/**
+ * Get all the days that contain data
+ *
+ * @param req
+ * @param res
+ */
+exports.getDataDays = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            let response = await Data.findAll({
+                where: {
+                    userId: user.id
+                },
+                attributes: [[sequelize.fn('DISTINCT', sequelize.cast(sequelize.col('Data.datetime'), 'date')), 'date']]
+            });
+            // let tabResponse = response.map(date => date.dataValues.date);
+            // console.log(tabResponse);
+            res.status(200).json(response.map(date => date.dataValues.date));
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+/**
+ * Get distinct import names
+ *
+ * @param req
+ * @param res
+ * @return {Promise<void>}
+ */
+exports.getImportNames = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            let response = await Data.findAll({
+                where: {
+                    userId: user.id
+                },
+                attributes: [[sequelize.fn('DISTINCT', sequelize.col('importName')), 'importName']]
+            });
+            res.status(200).json(response.map(name => name.dataValues.importName));
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+/**
+ * delete data of an import
+ *
+ * @param req
+ * @param res
+ * @return {Promise<void>}
+ */
+exports.deleteFile = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            if (!req.body.importName) {
+                return res.status(400).json('No import name in the request.');
+            }
+            let response = await Data.destroy({
+                where: {
+                    userId: user.id,
+                    ImportName: req.body.importName
+                }
+            });
+            console.log(response);
+            res.status(200).json("data of '" + req.body.importName + "' import deleted.");
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+/**
+ * Delete all data of a user
+ *
+ * @param req
+ * @param res
+ * @return {Promise<void>}
+ */
+exports.deleteAll = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            let response = await Data.destroy({
+                where: {
+                    userId: user.id
+                }
+            });
+            res.status(200).json("All data deleted.");
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
 //////////////////////////////////////////////////////
 /////////// controllers functions helpers ////////////
 //////////////////////////////////////////////////////
@@ -84,8 +219,9 @@ exports.postFile = function (req, res) {
  * @param req
  * @param res
  * @param user : object of a user context
+ * @param importName
  */
-function getFromMiniMedPump(req, res, user) {
+function getFromMiniMedPump(req, res, user, importName) {
     const fileRows = [];
     // open uploaded file
     csv.parseFile(req.file.path, {delimiter: ';'})
@@ -123,12 +259,13 @@ function getFromMiniMedPump(req, res, user) {
             try {
                 // dataObj.date.length
                 for (let i = 0; i < dataObj.date.length; i++) {
-                    // let dbFormatDatetime = parseDatetime(dataObj.date[i], dataObj.time[i]);
-                    let dbFormatDatetime = new Date(dataObj.date[i].substring(0, 4), dataObj.date[i].substring(5, 7) -1, dataObj.date[i].substring(8, 10), dataObj.time[i].split(':')[0], dataObj.time[i].split(':')[1]);
+                    let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
+                    // let dbFormatDatetime = new Date(dataObj.date[i].substring(0, 4), dataObj.date[i].substring(5, 7) -1, dataObj.date[i].substring(8, 10), dataObj.time[i].split(':')[0], dataObj.time[i].split(':')[1]);
                     Data.create({
                         datetime: dbFormatDatetime,
                         glucose: parseInt(dataObj.glucose[i]),
                         pumpSN: dataObj.pumpSN[i],
+                        importName: importName,
                         userId: user.id
                     });
                 }
@@ -138,7 +275,18 @@ function getFromMiniMedPump(req, res, user) {
             }
         });
 }
-
+/**
+ * parse date for chart display
+ *
+ * @param strDate
+ * @param strTime
+ * @return {Date}
+ */
+function formatDatetime(strDate, strTime){
+    let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
+    let coeff = 1000 * 60 * 5;
+    return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
+}
 /**
  * find the column number of time, date and glucose in the filerows array at start line.
  *
@@ -177,27 +325,26 @@ function findInFileRows(fileRows, start) {
     }
     return {colDate, colTime, colGlucose, pumpSN};
 }
-
 /**
  * Retrieve all user's data according to the given tags.
  *
  * @param tags : object which contains all the activations of a tag
  * @param userId : string
+ * @param fromToTime
  * @return {Promise<{}>} : object with all data
  */
-async function getAllDataFromTag(tags, userId) {
+async function getAllDataFromTag(tags, userId, fromToTime) {
     let datetimeTag = {};
     for (let i = 0; i < Object.keys(tags).length; i++) {
         let datetime = new Date(tags[i].getDataValue('startDatetime'));
         let fromDate = new Date(datetime);
-        fromDate.setHours(fromDate.getHours() - 1);
+        fromDate.setHours(fromDate.getHours() + parseInt(fromToTime[0]));
         let toDate = new Date(datetime);
-        toDate.setHours(toDate.getHours() + 3);
+        toDate.setHours(toDate.getHours() + parseInt(fromToTime[1]));
         datetimeTag[datetime.toISOString()] = await findFromDateToDate(fromDate, toDate, userId)
     }
     return datetimeTag;
 }
-
 /**
  * Retrieve data between two dates.
  *
@@ -226,7 +373,6 @@ async function findFromDateToDate(fromDate, toDate, userId) {
         return "findFromDateToDate request error";
     }
 }
-
 /**
  * modifies the data object by replacing the absolute dates by times relative to the activation of a tag
  *
@@ -245,7 +391,6 @@ function addRelativeToAllData(realDatetimesTags) {
     });
     return relativeTimesTags;
 }
-
 /**
  * manipulates the data of the all data object to facilitate the processing of the chart display in the web application.
  *
@@ -272,7 +417,6 @@ function chartFormatAllData(allData) {
 
     return chartData;
 }
-
 /**
  * Calculate the time between two dates
  *
@@ -304,7 +448,6 @@ function dateDiff(eventDate, realDate) {
     });
     return tab;
 }
-
 /**
  * sort datetimes of the xAxis
  *

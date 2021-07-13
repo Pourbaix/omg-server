@@ -26,6 +26,10 @@ const Data = sequelize.define('data',{
         type: DataTypes.TEXT,
         allowNull: false
     },
+    importName: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
     userId:{
         type: DataTypes.UUID,
         allowNull: false,

@@ -86,13 +86,13 @@ exports.testKey = async function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user) {
             if (err) {
-                return res.status(500).json("Authentication error");
+                return res.status(500).json({status: "error", message: "Authentication error"});
             }
             else if (!user) {
-                return res.status(401).json("Incorrect token");
+                return res.status(401).json({status: "error", message: "Incorrect token"});
             }
             else {
-                return res.status(200).json("ok");
+                return res.status(200).json({status: "ok", message: "valid key"});
             }
         })(req, res);
     } catch (e) {
