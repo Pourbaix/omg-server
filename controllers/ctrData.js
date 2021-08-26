@@ -113,7 +113,7 @@ exports.getDataDays = async function (req, res) {
                 where: {
                     userId: user.id
                 },
-                attributes: [[sequelize.fn('DISTINCT', sequelize.cast(sequelize.col('Data.datetime'), 'date')), 'date']]
+                attributes: [[sequelize.fn('DISTINCT', sequelize.cast(sequelize.col('data.datetime'), 'date')), 'date']]
             });
             // let tabResponse = response.map(date => date.dataValues.date);
             // console.log(tabResponse);
