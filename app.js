@@ -42,9 +42,9 @@ const routeUser = require("./routes/routeUser");
 const routeTag = require("./routes/routeTag");
 const routeData = require("./routes/routeData");
 
-app.use("/tags", routeTag);
-app.use("/users", routeUser);
-app.use("/data", routeData);
+app.use("/api/tags", routeTag);
+app.use("/api/users", routeUser);
+app.use("/api/data", routeData);
 //////////////////////////////////////////////////////
 
 ////////////////// Port connection ///////////////////
