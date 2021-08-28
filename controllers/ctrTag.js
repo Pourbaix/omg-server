@@ -75,7 +75,37 @@ exports.putOne = function (req, res) {
         res.status(500).json(e);
     }
 }
-
+/**
+ * Delete one tag activation of a user
+ *
+ * @param req
+ * @param res
+ * @return {Promise<void>}
+ */
+exports.deleteOne = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            if (!"tagId" in req.body) {
+                return res.status(401).json("Missing tagId");
+            }
+            let response = await Tag.destroy({
+                where: {
+                    userId: user.id,
+                    id:  req.body.tagId
+                }
+            });
+            res.status(200).json("Tag activation " + req.body.tagId + " deleted.");
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
 /**
  * get recent tags route controller. Retrieve 8 most recent tags (based on their activation date) of a user.
  *

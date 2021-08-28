@@ -5,6 +5,12 @@ const ctrTag = require("../controllers/ctrTag");
 // insert a new tag activation
 router.post("/one", ctrTag.postOne);
 
+// Edit one tag activation
+router.put("/one", ctrTag.putOne)
+
+// Delete one activation tag
+router.delete('/one', ctrTag.deleteOne);
+
 // retrieves all tags
 router.get("/all", ctrTag.getNamesFromUserId);
 
@@ -15,8 +21,5 @@ router.get("/recent", ctrTag.getRecentTagsFromUserId);
 router.get("/recentHistory", ctrTag.getTagsHistory);
 
 router.get("/countAllActivations", ctrTag.getCountAllActivations);
-
-// Edit one tag activation
-router.put("/one", ctrTag.putOne)
 
 module.exports = router;
