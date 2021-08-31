@@ -11,8 +11,14 @@ router.put("/one", ctrTag.putOne)
 // Delete one activation tag
 router.delete('/one', ctrTag.deleteOne);
 
-// retrieves all tags
+// retrieves all tag activations
 router.get("/all", ctrTag.getNamesFromUserId);
+
+// Change all tag activation name which have the same name that tagName
+router.put("/all", ctrTag.putAll);
+
+// delete all tags
+router.delete("/all", ctrTag.deleteAll);
 
 // Retrieve the 8 most recent tags
 router.get("/recent", ctrTag.getRecentTagsFromUserId);
@@ -21,5 +27,11 @@ router.get("/recent", ctrTag.getRecentTagsFromUserId);
 router.get("/recentHistory", ctrTag.getTagsHistory);
 
 router.get("/countAllActivations", ctrTag.getCountAllActivations);
+
+// Retrieve an array of days that contain tag activations
+router.get("/days", ctrTag.getTagsDays);
+
+// Retrieve an array of tags at a specific day
+router.get("/day", ctrTag.getTagsDay);
 
 module.exports = router;

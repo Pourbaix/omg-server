@@ -69,7 +69,6 @@ exports.postFile = function (req, res) {
             if (!user) {
                 return res.json({status: 'error', message: 'Incorrect token'});
             }
-            console.log(req.body)
             if (!req.body.sensorModel) {
                 return res.status(400).json('No sensor model in the request.');
             }
@@ -115,8 +114,6 @@ exports.getDataDays = async function (req, res) {
                 },
                 attributes: [[sequelize.fn('DISTINCT', sequelize.cast(sequelize.col('data.datetime'), 'date')), 'date']]
             });
-            // let tabResponse = response.map(date => date.dataValues.date);
-            // console.log(tabResponse);
             res.status(200).json(response.map(date => date.dataValues.date));
         })(req, res);
     } catch (e) {
@@ -366,7 +363,6 @@ async function findFromDateToDate(fromDate, toDate, userId) {
             order: [
                 ['datetime']
             ]
-
         });
         return results;
     } catch (error) {

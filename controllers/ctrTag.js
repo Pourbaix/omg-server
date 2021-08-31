@@ -39,7 +39,6 @@ exports.postOne = function (req, res) {
         res.status(500).json(e);
     }
 }
-
 /**
  *  put one tag route controller. Edit an activation tag.
  *
@@ -55,16 +54,16 @@ exports.putOne = function (req, res) {
             if (!user) {
                 return res.status(401).json("Incorrect token");
             }
-            if (!"tagName" in req.body) {
+            if (!req.body.tagName) {
                 return res.status(401).json("Missing tagName");
             }
-            if (!"tagDatetime" in req.body) {
+            if (!req.body.tagDatetime) {
                 return res.status(401).json("Missing tagDatetime");
             }
-            if (!"tagId" in req.body) {
+            if (!req.body.tagId) {
                 return res.status(401).json("Missing tagId");
             }
-            Tag.update({name: req.body.tagName, startDatetime: req.body.tagDatetime},{where: {id: req.body.tagId}}).then(() => {
+            Tag.update({name: req.body.tagName, startDatetime: req.body.tagDatetime}, {where: {id: req.body.tagId}}).then(() => {
                 console.log(req.body);
                 return res.status(200).json("tag successfully edited");
             }).catch((err) => {
@@ -91,16 +90,89 @@ exports.deleteOne = async function (req, res) {
             if (!user) {
                 return res.json({status: 'error', message: "Incorrect token"});
             }
-            if (!"tagId" in req.body) {
+            if (!req.body.tagId) {
                 return res.status(401).json("Missing tagId");
             }
             let response = await Tag.destroy({
                 where: {
                     userId: user.id,
-                    id:  req.body.tagId
+                    id: req.body.tagId
                 }
             });
             res.status(200).json("Tag activation " + req.body.tagId + " deleted.");
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+/**
+ * Change all tag activation name which have the same name that tagName with newTagName
+ *
+ * @param req
+ * @param res
+ */
+exports.putAll = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.status(500).json("Authentication error");
+            }
+            if (!user) {
+                return res.status(401).json("Incorrect token");
+            }
+            if (!req.body.tagName) {
+                return res.status(401).json("Missing tagName");
+            }
+            if (!req.body.newTagName) {
+                return res.status(401).json("Missing newTagName");
+            }
+            Tag.update({name: req.body.newTagName}, {where: {name: req.body.tagName}}).then(() => {
+                console.log(req.body);
+                return res.status(200).json("Name successfully changed");
+            }).catch((err) => {
+                return res.status(500).json("something wrong happened while editing a tag: " + err);
+            });
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+/**
+ * Delete all tag activations of a user. If request body contains tagName then it will delete all tag activations associated with this name
+ *
+ * @param req
+ * @param res
+ * @return {Promise<void>}
+ */
+exports.deleteAll = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            if (!req.body.tagName) {
+                return res.status(401).json("Missing tagName");
+            }
+            let response = "";
+            if (req.body.tagName === "All") {
+                response = await Tag.destroy({
+                    where: {
+                        userId: user.id
+                    }
+                });
+            }else {
+                response = await Tag.destroy({
+                    where: {
+                        userId: user.id,
+                        name: req.body.tagName
+                    }
+                });
+            }
+            console.log(response);
+            res.status(200).json("Tag " + req.body.tagName + " deleted.");
         })(req, res);
     } catch (e) {
         res.status(500).json(e);
@@ -138,7 +210,6 @@ exports.getRecentTagsFromUserId = function (req, res) {
         res.status(500).json(e);
     }
 }
-
 /**
  * get all tags route controller. Retrieve all the tags of a user
  *
@@ -169,7 +240,6 @@ exports.getNamesFromUserId = function (req, res) {
         res.status(500).json(e);
     }
 };
-
 /**
  * get recent history tags route controller. Retrieve 10 most recent tags (based on their creation date) of a user.
  *
@@ -185,7 +255,7 @@ exports.getTagsHistory = function (req, res) {
             if (!user) {
                 return res.json({status: 'error', message: "Incorrect token"});
             }
-            if (!"datetimeBegin" in req.query) {
+            if (!req.query.datetimeBegin) {
                 return res.json({status: 'error', message: "missing datetimeBegin"});
             }
 
@@ -215,7 +285,6 @@ exports.getTagsHistory = function (req, res) {
         res.status(500).json(e);
     }
 }
-
 /**
  * get the count of all tag activations
  *
@@ -243,7 +312,98 @@ exports.getCountAllActivations = function (req, res) {
         res.status(500).json(e);
     }
 };
+/**
+ * get an array of days that contain tag activations
+ *
+ * @param req
+ * @param res
+ * @return {Promise<void>}
+ */
+exports.getTagsDays = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            let response = "";
+            if (!req.query.tagName) {
+                response = await Tag.findAll({
+                    where: {
+                        userId: user.id
+                    },
+                    attributes: [[sequelize.fn('DISTINCT', sequelize.cast(sequelize.col('tag.startDatetime'), 'date')), 'date']]
+                });
+            } else {
+                response = await Tag.findAll({
+                    where: {
+                        userId: user.id,
+                        name: req.query.tagName
 
+                    },
+                    attributes: [[sequelize.fn('DISTINCT', sequelize.cast(sequelize.col('tag.startDatetime'), 'date')), 'date']]
+                });
+            }
+
+            res.status(200).json(response.map(date => date.dataValues.date));
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+
+exports.getTagsDay = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            if (!req.query.day) {
+                return res.status(400).json("missing day parameter");
+            }
+            let fromDate = new Date(req.query.day);
+            let toDate = new Date(req.query.day);
+            toDate.setDate(toDate.getDate() + 1);
+            let response = "";
+            if (!req.query.tagName) {
+                response = await Tag.findAll({
+                    attributes: ['id','name','startDatetime'],
+                    where: {
+                        userId: user.id,
+                        startDatetime: {
+                            [Sequelize.Op.between]: [fromDate.toISOString(), toDate.toISOString()]
+                        }
+                    },
+                    order: [
+                        ['startDatetime']
+                    ]
+                });
+            } else {
+                response = await Tag.findAll({
+                    attributes: ['id','name','startDatetime'],
+                    where: {
+                        userId: user.id,
+                        name: req.query.tagName,
+                        startDatetime: {
+                            [Sequelize.Op.between]: [fromDate, toDate]
+                        }
+                    },
+                    order: [
+                        ['startDatetime']
+                    ]
+                });
+            }
+            res.status(200).json(response);
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
 //////////////////////////////////////////////////////
 /////////// controllers functions helpers ////////////
 //////////////////////////////////////////////////////

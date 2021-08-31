@@ -11,7 +11,7 @@ router.post('/file', upload.single('file'), ctrData.postFile);
 router.get('/chart', ctrData.chart);
 
 // Retrieve an array of the days that contain data
-router.get('/datadays', ctrData.getDataDays);
+router.get('/days', ctrData.getDataDays);
 
 // Retrieve an array of import names
 router.get('/importnames', ctrData.getImportNames);
