@@ -246,6 +246,51 @@ exports.getNamesFromUserId = function (req, res) {
  * @param req
  * @param res
  */
+exports.getTagsHistoryByActivationTime = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            if (!req.query.datetimeBegin) {
+                return res.json({status: 'error', message: "missing datetimeBegin"});
+            }
+
+            let datetime = new Date(req.query.datetimeBegin);
+
+            Tag.findAll({
+                attributes: ['name', 'startDatetime', 'updatedAt', 'id'],
+                where: {
+                    [Op.and]: [
+                        {userId: user.id},
+                        {
+                            startDatetime: {
+                                [Op.lt]: datetime.toISOString()
+                            }
+                        }
+                    ]
+                },
+                limit: 10,
+                order: sequelize.literal('startDatetime DESC')
+            }).then((data) => {
+                let tags = [];
+                data.forEach((tag) => tags.push(tag));
+                res.status(200).json(tags);
+            })
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+/**
+ * get recent history tags route controller. Retrieve 10 most recent tags (based on their creation date) of a user.
+ *
+ * @param req
+ * @param res
+ */
 exports.getTagsHistory = function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user) {

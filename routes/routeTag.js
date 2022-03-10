@@ -20,8 +20,12 @@ router.put("/all", ctrTag.putAll);
 // delete all tags
 router.delete("/all", ctrTag.deleteAll);
 
-// Retrieve the 8 most recent tags
+// Retrieve the 8 most recent distinct tags
 router.get("/recent", ctrTag.getRecentTagsFromUserId);
+
+// Retrieve the 10 mosts recent tags based on their activation date.
+router.get("/recentHistorySorted", ctrTag.getTagsHistoryByActivationTime);
+
 
 // Retrieve the 10 mosts recent tags based on their creation date.
 router.get("/recentHistory", ctrTag.getTagsHistory);
