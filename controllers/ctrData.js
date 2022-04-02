@@ -313,22 +313,22 @@ function getFromMiniMedPump(req, res, user, importName) {
                 for (let i = 0; i < dataObj.date.length; i++) {
                     // console.log(dataObj.date[i]);
                     // console.log(dataObj.time[i]);
-                    let objFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
-                    for (let j = 0; j < datetimeDB.length; j++) {
-                        if (objFormatDatetime.getTime() === datetimeDB[j].dateDB.getTime()) {
-                            console.log("jai trouve le dup: "+i);
-                        }
+                    let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
+                    // for (let j = 0; j < datetimeDB.length; j++) {
+                    //     if (dbFormatDatetime.getTime() === datetimeDB[j].dateDB.getTime()) {
+                    //         console.log("jai trouve le dup: "+i);
+                    //     }
                         // console.log(i);
                         // else {
-                        //     Data.create({
-                        //         datetime: dbFormatDatetime,
-                        //         glucose: parseInt(dataObj.glucose[i]),
-                        //         pumpSN: dataObj.pumpSN[i],
-                        //         importName: importName,
-                        //         userId: user.id
-                        //     });
+                            Data.create({
+                                datetime: dbFormatDatetime,
+                                glucose: parseInt(dataObj.glucose[i]),
+                                pumpSN: dataObj.pumpSN[i],
+                                importName: importName,
+                                userId: user.id
+                            });
                         // }
-                    }
+                    // }
                     // let dbFormatDatetime = new Date(dataObj.date[i].substring(0, 4), dataObj.date[i].substring(5, 7) -1, dataObj.date[i].substring(8, 10), dataObj.time[i].split(':')[0], dataObj.time[i].split(':')[1]);
                     // console.log(dbFormatDatetime);
 
