@@ -5,6 +5,7 @@ const Sequelize = seq.Sequelize, sequelize = seq.sequelize;
 const csv = require('fast-csv');
 const fs = require('fs');
 const passport = require("../app");
+const {Op} = require("sequelize");
 
 //////////////////////////////////////////////////////
 /////////////// Routes controllers ///////////////////
@@ -257,6 +258,42 @@ async function getDatetimesDB(user){
     return await response;
 
 }
+
+async function insertIfNoDup(dataObj, importName, user){
+
+    let seeDup = 0;
+    let seeInsert = 0;
+    for (let i = 0; i < dataObj.date.length; i++) {
+        let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
+        await Data.findOne(
+            { logging: false,
+                where: {
+                    [Op.and]: [
+                        {datetime: dbFormatDatetime},
+                        {userId: user.id}
+                    ]
+                },
+                // where: {
+                //     datetime: dbFormatDatetime
+                // }
+            }).then((res) => {
+            if (res){
+                // console.log("res: "+res+"   index: "+i);
+                console.log(seeDup++);
+            }
+            else {
+                Data.create({
+                    datetime: dbFormatDatetime,
+                    glucose: parseInt(dataObj.glucose[i]),
+                    pumpSN: dataObj.pumpSN[i],
+                    importName: importName,
+                    userId: user.id
+                }).then(console.log(seeInsert++));
+            }
+        });
+    }
+    return [seeDup, seeInsert];
+}
 /**
  *  Minimed import method
  *
@@ -302,40 +339,9 @@ function getFromMiniMedPump(req, res, user, importName) {
             });
 
             try {
-                // dataObj.date.length
-                getDatetimesDB(user).then((response) => {
-                    const datetimeDB = [];
-                    response.forEach((date) => {
-                        datetimeDB.push({dateDB: date.dataValues.date});
-                    });
-                    console.log(datetimeDB[0].dateDB.getTime()); //object Date
-                    console.log(formatDatetime(dataObj.date[0], dataObj.time[0]).getTime()); //object Date
-                for (let i = 0; i < dataObj.date.length; i++) {
-                    // console.log(dataObj.date[i]);
-                    // console.log(dataObj.time[i]);
-                    let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
-                    // for (let j = 0; j < datetimeDB.length; j++) {
-                    //     if (dbFormatDatetime.getTime() === datetimeDB[j].dateDB.getTime()) {
-                    //         console.log("jai trouve le dup: "+i);
-                    //     }
-                        // console.log(i);
-                        // else {
-                            Data.create({
-                                datetime: dbFormatDatetime,
-                                glucose: parseInt(dataObj.glucose[i]),
-                                pumpSN: dataObj.pumpSN[i],
-                                importName: importName,
-                                userId: user.id
-                            });
-                        // }
-                    // }
-                    // let dbFormatDatetime = new Date(dataObj.date[i].substring(0, 4), dataObj.date[i].substring(5, 7) -1, dataObj.date[i].substring(8, 10), dataObj.time[i].split(':')[0], dataObj.time[i].split(':')[1]);
-                    // console.log(dbFormatDatetime);
-
-                }
-                    console.log("dataObj: "+dataObj.date.length);
-                    console.log("DBDatateime: "+datetimeDB.length);
-                res.status(200).json('ok');
+                insertIfNoDup(dataObj, importName, user).then((see) => {
+                    console.log(see[0] + "--" + see[1]);
+                    res.status(200).json({status: 'ok', seeDup: see[0], seeInsert: see[1]});
                 });
             } catch (e) {
                 res.status(500).json('An error occured while insert data' + e);
