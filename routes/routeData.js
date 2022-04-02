@@ -10,8 +10,11 @@ router.post('/file', upload.single('file'), ctrData.postFile);
 // Retrieve data for chart display
 router.get('/chart', ctrData.chart);
 
-// Retrieve an array of the days that contain data
+// Retrieve an array of the days from data
 router.get('/days', ctrData.getDataDays);
+
+// Retrieve an array of the datetime from data
+router.get('/datetime', ctrData.getDataDatetime);
 
 // Retrieve an array of import names
 router.get('/importnames', ctrData.getImportNames);

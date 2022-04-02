@@ -81,6 +81,14 @@ exports.postFile = function (req, res) {
             if (req.file.originalname.split(".")[1] !== "csv") {
                 return res.status(400).json('Only CSV files are allowed.');
             }
+            // let response = Data.findAll({
+            //     where: {
+            //         userId: user.id
+            //     },
+            //     attributes: [[sequelize.fn('DISTINCT', sequelize.col('data.datetime')), 'date']]
+            // });
+            // // response.map(date => date.dataValues.date);
+            // console.log(response);
             switch (req.body.sensorModel) {
                 case "minimed":
                     getFromMiniMedPump(req, res, user, req.body.importName);
@@ -94,7 +102,7 @@ exports.postFile = function (req, res) {
     }
 }
 /**
- * Get all the days that contain data
+ * Get all the days from data
  *
  * @param req
  * @param res
@@ -113,6 +121,33 @@ exports.getDataDays = async function (req, res) {
                     userId: user.id
                 },
                 attributes: [[sequelize.fn('DISTINCT', sequelize.cast(sequelize.col('data.datetime'), 'date')), 'date']]
+            });
+            res.status(200).json(response.map(date => date.dataValues.date));
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+/**
+ * Get all datetime from data
+ *
+ * @param req
+ * @param res
+ */
+exports.getDataDatetime = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            let response = await Data.findAll({
+                where: {
+                    userId: user.id
+                },
+                attributes: [[sequelize.fn('DISTINCT', sequelize.col('data.datetime')), 'date']]
             });
             res.status(200).json(response.map(date => date.dataValues.date));
         })(req, res);
@@ -210,6 +245,18 @@ exports.deleteAll = async function (req, res) {
 //////////////////////////////////////////////////////
 /////////// controllers functions helpers ////////////
 //////////////////////////////////////////////////////
+async function getDatetimesDB(user){
+    let response = Data.findAll({
+        where: {
+            userId: user.id
+        },
+        attributes: [[sequelize.fn('DISTINCT', sequelize.col('data.datetime')), 'date']]
+    });
+
+    console.log(typeof await response);
+    return await response;
+
+}
 /**
  *  Minimed import method
  *
@@ -219,6 +266,7 @@ exports.deleteAll = async function (req, res) {
  * @param importName
  */
 function getFromMiniMedPump(req, res, user, importName) {
+    // getDatetimesDB(user).then((response) => console.log(JSON.stringify(response)));
     const fileRows = [];
     // open uploaded file
     csv.parseFile(req.file.path, {delimiter: ';'})
@@ -255,18 +303,40 @@ function getFromMiniMedPump(req, res, user, importName) {
 
             try {
                 // dataObj.date.length
-                for (let i = 0; i < dataObj.date.length; i++) {
-                    let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
-                    // let dbFormatDatetime = new Date(dataObj.date[i].substring(0, 4), dataObj.date[i].substring(5, 7) -1, dataObj.date[i].substring(8, 10), dataObj.time[i].split(':')[0], dataObj.time[i].split(':')[1]);
-                    Data.create({
-                        datetime: dbFormatDatetime,
-                        glucose: parseInt(dataObj.glucose[i]),
-                        pumpSN: dataObj.pumpSN[i],
-                        importName: importName,
-                        userId: user.id
+                getDatetimesDB(user).then((response) => {
+                    const datetimeDB = [];
+                    response.forEach((date) => {
+                        datetimeDB.push({dateDB: date.dataValues.date});
                     });
+                    console.log(datetimeDB[0].dateDB.getTime()); //object Date
+                    console.log(formatDatetime(dataObj.date[0], dataObj.time[0]).getTime()); //object Date
+                for (let i = 0; i < dataObj.date.length; i++) {
+                    // console.log(dataObj.date[i]);
+                    // console.log(dataObj.time[i]);
+                    let objFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
+                    for (let j = 0; j < datetimeDB.length; j++) {
+                        if (objFormatDatetime.getTime() === datetimeDB[j].dateDB.getTime()) {
+                            console.log("jai trouve le dup: "+i);
+                        }
+                        // console.log(i);
+                        // else {
+                        //     Data.create({
+                        //         datetime: dbFormatDatetime,
+                        //         glucose: parseInt(dataObj.glucose[i]),
+                        //         pumpSN: dataObj.pumpSN[i],
+                        //         importName: importName,
+                        //         userId: user.id
+                        //     });
+                        // }
+                    }
+                    // let dbFormatDatetime = new Date(dataObj.date[i].substring(0, 4), dataObj.date[i].substring(5, 7) -1, dataObj.date[i].substring(8, 10), dataObj.time[i].split(':')[0], dataObj.time[i].split(':')[1]);
+                    // console.log(dbFormatDatetime);
+
                 }
+                    console.log("dataObj: "+dataObj.date.length);
+                    console.log("DBDatateime: "+datetimeDB.length);
                 res.status(200).json('ok');
+                });
             } catch (e) {
                 res.status(500).json('An error occured while insert data' + e);
             }

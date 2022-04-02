@@ -22,8 +22,8 @@ module.exports = passport;
 
 ///////////////// Body-parser ////////////////////////
 const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
-app.use(bodyParser.json({limit: '50mb', extended: true}));
+app.use(bodyParser.urlencoded({limit: '500mb', extended: true}));
+app.use(bodyParser.json({limit: '500mb', extended: true}));
 //////////////////////////////////////////////////////
 
 ///////////////// SYNC DB ////////////////////////////

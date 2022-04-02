@@ -99,7 +99,7 @@ exports.deleteOne = async function (req, res) {
                     id: req.body.tagId
                 }
             });
-            res.status(200).json("Tag activation " + req.body.tagId + " deleted.");
+            res.status(200).json("Tag " + req.body.tagId + " deleted.");
         })(req, res);
     } catch (e) {
         res.status(500).json(e);
