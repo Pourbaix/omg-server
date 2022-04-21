@@ -263,7 +263,10 @@ async function insertIfNoDup(dataObj, importName, user){
 
     let seeDup = 0;
     let seeInsert = 0;
+    // console.log("carb date length: " + dataObj.carbDate.length + "\n" + dataObj.carbTime.length + "\ncarb length: " + dataObj.carbInput.length);
+
     for (let i = 0; i < dataObj.date.length; i++) {
+        // console.log("carb date : " + dataObj.carbDate[i] + "\n" + dataObj.carbTime[i] + "\ncarb : " + dataObj.carbInput[i]);
         let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
         await Data.findOne(
             { logging: false,
@@ -287,10 +290,13 @@ async function insertIfNoDup(dataObj, importName, user){
                     glucose: parseInt(dataObj.glucose[i]),
                     pumpSN: dataObj.pumpSN[i],
                     importName: importName,
-                    userId: user.id
+                    userId: user.id,
                 }).then(console.log(seeInsert++));
             }
         });
+    }
+    for(let z = 0; z < dataObj.carbDate.length; z++){
+        console.log("carb date : " + dataObj.carbDate[z] + "\n" + dataObj.carbTime[z] + "\ncarb : " + dataObj.carbInput[z]);
     }
     return [seeDup, seeInsert];
 }
@@ -314,9 +320,10 @@ function getFromMiniMedPump(req, res, user, importName) {
             fs.unlinkSync(req.file.path);   // remove temp file
             ////////////////////process "fileRows" and respond
             // Variables
-            let dataObj = {'date': [], 'time': [], 'glucose': [], 'pumpSN': []};
+            let dataObj = {'date': [], 'time': [], 'glucose': [], 'pumpSN': [], 'carbDate': [], 'carbTime': [], 'carbInput': []};
             let cols = findInFileRows(fileRows, 0);
-            let colDate = cols.colDate, colTime = cols.colTime, colGlucose = cols.colGlucose, pumpSN = cols.pumpSN;
+            let colDate = cols.colDate, colTime = cols.colTime, colGlucose = cols.colGlucose, pumpSN = cols.pumpSN, colCarbInput = cols.colCarbInput;
+            // console.log("coldate : " + colDate + "\n" + colTime + "\n" + colGlucose + "\ncarb: " + colCarbInput);
             // Retrieve date time and glucose rows
             fileRows.forEach((row) => {
                 if ((typeof row[0]).toString() === "string") {
@@ -326,14 +333,25 @@ function getFromMiniMedPump(req, res, user, importName) {
                         colTime = cols.colTime;
                         colGlucose = cols.colGlucose;
                         pumpSN = cols.pumpSN;
+                        colCarbInput = cols.colCarbInput;
+                        // console.log("coldate : " + colDate + "\n" + colTime + "\n" + colGlucose + "\ncarb: " + colCarbInput);
                     }
                 }
                 if (((typeof row[colDate]).toString() === "string") && ((typeof row[colTime]).toString() === "string") && ((typeof row[colGlucose]).toString() === "string")) {
                     if ((row[colDate].includes('/')) && (row[colTime].includes(':') && (row[colGlucose].length >= 2))) {
-                        dataObj.glucose.push(row[colGlucose]);
                         dataObj.date.push(row[colDate]);
                         dataObj.time.push(row[colTime]);
+                        dataObj.glucose.push(row[colGlucose]);
                         dataObj.pumpSN.push(pumpSN);
+                        // dataObj.carbInput.push(row[colCarbInput]);
+                        // console.log(row[carbInput]);
+                    }
+                }
+                if((typeof row[colCarbInput]).toString() === "string" && ((typeof row[colDate]).toString() === "string") && ((typeof row[colTime]).toString() === "string")){
+                    if ((row[colDate].includes('/')) && (row[colTime].includes(':') && row[colCarbInput].length > 0)){
+                        dataObj.carbDate.push(row[colDate]);
+                        dataObj.carbTime.push(row[colTime]);
+                        dataObj.carbInput.push(row[colCarbInput]);
                     }
                 }
             });
@@ -364,14 +382,14 @@ function formatDatetime(strDate, strTime){
  * find the column number of time, date and glucose in the filerows array at start line.
  *
  * @param fileRows : array of the csv file
- * @param start : line number where to start
+ * @param start : number of the line (where to start)
  * @return {{colTime: number, pumpSN: string, colGlucose: number, colDate: number}}
  */
 function findInFileRows(fileRows, start) {
-    let colDate = -1, colTime = -1, colGlucose = -1, pumpSN = "";
+    let colDate = -1, colTime = -1, colGlucose = -1, pumpSN = "", colCarbInput = -1;
     // Find column numbers and pump serial number
     for (let row = start; row < fileRows.length; row++) {
-        if (colGlucose < 0 || colTime < 0 || colGlucose < 0 || pumpSN === "") {
+        if (colGlucose < 0 || colTime < 0 || colGlucose < 0 || pumpSN === "" || colCarbInput < 0) {
             for (let col = 0; col < fileRows[row].length; col++) {
                 if ((typeof fileRows[row][col]).toString() === "string") {
                     if (colDate < 0) {
@@ -390,13 +408,17 @@ function findInFileRows(fileRows, start) {
                         if (fileRows[row][col] === "Sensor" || fileRows[row][col] === "Pump")
                             pumpSN = fileRows[row][col + 1];
                     }
+                    if (colCarbInput < 0) {
+                        if (fileRows[row][col] === "BWZ Carb Input (grams)")
+                            colCarbInput = fileRows[row].indexOf(fileRows[row][col]);
+                    }
                 }
             }
         } else {
             break;
         }
     }
-    return {colDate, colTime, colGlucose, pumpSN};
+    return {colDate, colTime, colGlucose, pumpSN, colCarbInput};
 }
 /**
  * Retrieve all user's data according to the given tags.
