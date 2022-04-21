@@ -1,4 +1,5 @@
 const Data = require("../models/modelData");
+const Insulin = require("../models/modelInsulin");
 const seq = require("../config/config");
 const ctrTag = require("../controllers/ctrTag");
 const Sequelize = seq.Sequelize, sequelize = seq.sequelize;
@@ -296,7 +297,34 @@ async function insertIfNoDup(dataObj, importName, user){
         });
     }
     for(let z = 0; z < dataObj.carbDate.length; z++){
+        let dbFormatDatetime = formatDatetimeWithoutRound(dataObj.carbDate[z], dataObj.carbTime[z]);
+        await Insulin.findOne(
+            { logging: false,
+                where: {
+                    [Op.and]: [
+                        {datetime: dbFormatDatetime},
+                        {userId: user.id}
+                    ]
+                },
+                // where: {
+                //     datetime: dbFormatDatetime
+                // }
+            }).then((res) => {
+            if (res){
+                // console.log("res: "+res+"   index: "+i);
+                // console.log(seeDup++);
+                console.log("dup in insulin");
+            }
+            else {
+                Insulin.create({
+                    datetime: dbFormatDatetime,
+                    carbInput: parseInt(dataObj.carbInput[z]),
+                    userId: user.id,
+                }).then(console.log(seeInsert++));
+            }
+        });
         console.log("carb date : " + dataObj.carbDate[z] + "\n" + dataObj.carbTime[z] + "\ncarb : " + dataObj.carbInput[z]);
+
     }
     return [seeDup, seeInsert];
 }
@@ -377,6 +405,10 @@ function formatDatetime(strDate, strTime){
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
     let coeff = 1000 * 60 * 5;
     return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
+}
+function formatDatetimeWithoutRound(strDate, strTime){
+    let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
+    return new Date(objDatetime.getTime());
 }
 /**
  * find the column number of time, date and glucose in the filerows array at start line.
