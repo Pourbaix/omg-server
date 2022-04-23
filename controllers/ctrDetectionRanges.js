@@ -41,3 +41,51 @@ exports.postOne = function (req, res) {
         res.status(500).json(e);
     }
 }
+
+exports.getAll = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+
+            DetectionRanges.findAll({
+                attributes: ['name', 'fromTime', 'toTime', 'daysSelected'],
+                where: {userId: user.id},
+                limit: 100,
+                order: sequelize.literal('updatedAt DESC')
+            }).then((data) => {
+                let ranges = [];
+                data.forEach((range) => ranges.push(range));
+                res.status(200).json(ranges);
+            })
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+
+exports.getCountAll = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            DetectionRanges.count({
+                where: {
+                    userId: user.id
+                }
+            }).then((data) => {
+                res.status(200).json(data);
+            })
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+};

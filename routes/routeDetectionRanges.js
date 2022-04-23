@@ -5,6 +5,8 @@ const ctrDetectionRanges = require("../controllers/ctrDetectionRanges");
 // insert a new range to watch when importing glucose & bolus data
 router.post("/one", ctrDetectionRanges.postOne);
 
+router.get("/all", ctrDetectionRanges.getAll);
 
+router.get("/countAll", ctrDetectionRanges.getCountAll);
 
 module.exports = router;
