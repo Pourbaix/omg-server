@@ -9,4 +9,6 @@ router.get("/all", ctrDetectionRanges.getAll);
 
 router.get("/countAll", ctrDetectionRanges.getCountAll);
 
+router.get("/detect", ctrDetectionRanges.detectEventInRange);
+
 module.exports = router;
