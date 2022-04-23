@@ -1,12 +1,12 @@
 //////////////////////////////////////////////////////
-////////// Sequelize Data model (table) //////////////
+////////// Sequelize GlucoseData model (table) //////////////
 //////////////////////////////////////////////////////
 
 const seq = require("../config/config");
 const Sequelize = seq.Sequelize, sequelize = seq.sequelize, DataTypes = seq.DataTypes;
 const User = require("./modelUser"), Tag = require('./modelTag');
 
-const Data = sequelize.define('data',{
+const GlucoseData = sequelize.define('glucosedata',{
     id: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -41,7 +41,7 @@ const Data = sequelize.define('data',{
     }
 }, {
     sequelize,
-    modelName: 'data',
+    modelName: 'glucosedata',
 })
 
-module.exports = Data;
+module.exports = GlucoseData;

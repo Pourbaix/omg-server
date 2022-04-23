@@ -32,6 +32,12 @@ const Tag = sequelize.define('tag',{
             model: User,
             key: 'id'
         }
+    },
+    isPending:{
+        type: DataTypes.BOOLEAN,
+    },
+    wasAuto:{
+        type: DataTypes.BOOLEAN,
     }
 }, {
     sequelize,

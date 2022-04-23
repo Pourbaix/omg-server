@@ -41,10 +41,12 @@ seq.sequelize.sync()
 const routeUser = require("./routes/routeUser");
 const routeTag = require("./routes/routeTag");
 const routeData = require("./routes/routeData");
+const routeDetectionRanges = require("./routes/routeDetectionRanges");
 
 app.use("/api/tags", routeTag);
 app.use("/api/users", routeUser);
 app.use("/api/data", routeData);
+app.use("/api/ranges", routeDetectionRanges);
 //////////////////////////////////////////////////////
 
 

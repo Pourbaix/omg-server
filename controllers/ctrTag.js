@@ -28,7 +28,9 @@ exports.postOne = function (req, res) {
                 name: req.body.tag,
                 startDatetime: req.body.startDatetime,
                 endDatetime: req.body.endDatetime,
-                userId: user.id
+                userId: user.id,
+                isPending: false,
+                wasAuto: false,
             }).then(() => {
                 return res.status(200).json("ok");
             }).catch((err) => {

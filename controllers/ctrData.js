@@ -1,5 +1,5 @@
-const Data = require("../models/modelData");
-const Insulin = require("../models/modelInsulin");
+const GlucoseData = require("../models/modelGlucoseData");
+const Bolus = require("../models/modelBolus");
 const seq = require("../config/config");
 const ctrTag = require("../controllers/ctrTag");
 const Sequelize = seq.Sequelize, sequelize = seq.sequelize;
@@ -118,11 +118,11 @@ exports.getDataDays = async function (req, res) {
             if (!user) {
                 return res.json({status: 'error', message: "Incorrect token"});
             }
-            let response = await Data.findAll({
+            let response = await GlucoseData.findAll({
                 where: {
                     userId: user.id
                 },
-                attributes: [[sequelize.fn('DISTINCT', sequelize.cast(sequelize.col('data.datetime'), 'date')), 'date']]
+                attributes: [[sequelize.fn('DISTINCT', sequelize.cast(sequelize.col('glucosedata.datetime'), 'date')), 'date']]
             });
             res.status(200).json(response.map(date => date.dataValues.date));
         })(req, res);
@@ -145,11 +145,11 @@ exports.getDataDatetime = async function (req, res) {
             if (!user) {
                 return res.json({status: 'error', message: "Incorrect token"});
             }
-            let response = await Data.findAll({
+            let response = await GlucoseData.findAll({
                 where: {
                     userId: user.id
                 },
-                attributes: [[sequelize.fn('DISTINCT', sequelize.col('data.datetime')), 'date']]
+                attributes: [[sequelize.fn('DISTINCT', sequelize.col('glucosedata.datetime')), 'date']]
             });
             res.status(200).json(response.map(date => date.dataValues.date));
         })(req, res);
@@ -173,7 +173,7 @@ exports.getImportNames = async function (req, res) {
             if (!user) {
                 return res.json({status: 'error', message: "Incorrect token"});
             }
-            let response = await Data.findAll({
+            let response = await GlucoseData.findAll({
                 where: {
                     userId: user.id
                 },
@@ -204,7 +204,7 @@ exports.deleteFile = async function (req, res) {
             if (!req.body.importName) {
                 return res.status(400).json('No import name in the request.');
             }
-            let response = await Data.destroy({
+            let response = await GlucoseData.destroy({
                 where: {
                     userId: user.id,
                     ImportName: req.body.importName
@@ -233,7 +233,7 @@ exports.deleteAll = async function (req, res) {
             if (!user) {
                 return res.json({status: 'error', message: "Incorrect token"});
             }
-            let response = await Data.destroy({
+            let response = await GlucoseData.destroy({
                 where: {
                     userId: user.id
                 }
@@ -248,11 +248,11 @@ exports.deleteAll = async function (req, res) {
 /////////// controllers functions helpers ////////////
 //////////////////////////////////////////////////////
 async function getDatetimesDB(user){
-    let response = Data.findAll({
+    let response = GlucoseData.findAll({
         where: {
             userId: user.id
         },
-        attributes: [[sequelize.fn('DISTINCT', sequelize.col('data.datetime')), 'date']]
+        attributes: [[sequelize.fn('DISTINCT', sequelize.col('glucosedata.datetime')), 'date']]
     });
 
     console.log(typeof await response);
@@ -269,7 +269,7 @@ async function insertIfNoDup(dataObj, importName, user){
     for (let i = 0; i < dataObj.date.length; i++) {
         // console.log("carb date : " + dataObj.carbDate[i] + "\n" + dataObj.carbTime[i] + "\ncarb : " + dataObj.carbInput[i]);
         let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
-        await Data.findOne(
+        await GlucoseData.findOne(
             { logging: false,
                 where: {
                     [Op.and]: [
@@ -286,7 +286,7 @@ async function insertIfNoDup(dataObj, importName, user){
                 console.log(seeDup++);
             }
             else {
-                Data.create({
+                GlucoseData.create({
                     datetime: dbFormatDatetime,
                     glucose: parseInt(dataObj.glucose[i]),
                     pumpSN: dataObj.pumpSN[i],
@@ -298,7 +298,7 @@ async function insertIfNoDup(dataObj, importName, user){
     }
     for(let z = 0; z < dataObj.carbDate.length; z++){
         let dbFormatDatetime = formatDatetimeWithoutRound(dataObj.carbDate[z], dataObj.carbTime[z]);
-        await Insulin.findOne(
+        await Bolus.findOne(
             { logging: false,
                 where: {
                     [Op.and]: [
@@ -313,10 +313,10 @@ async function insertIfNoDup(dataObj, importName, user){
             if (res){
                 // console.log("res: "+res+"   index: "+i);
                 // console.log(seeDup++);
-                console.log("dup in insulin");
+                console.log("dup in Bolus");
             }
             else {
-                Insulin.create({
+                Bolus.create({
                     datetime: dbFormatDatetime,
                     carbInput: parseInt(dataObj.carbInput[z]),
                     userId: user.id,
@@ -482,7 +482,7 @@ async function getAllDataFromTag(tags, userId, fromToTime) {
  */
 async function findFromDateToDate(fromDate, toDate, userId) {
     try {
-        const results = await Data.findAll({
+        const results = await GlucoseData.findAll({
             attributes: ['datetime', 'glucose'],
             where: {
                 userId: userId,

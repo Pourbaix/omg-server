@@ -18,11 +18,11 @@ const DetectionRanges = sequelize.define('detectionranges',{
         allowNull: false
     },
     fromTime:{
-        type: DataTypes.DATE,
+        type: DataTypes.TIME,
         allowNull: false
     },
     toTime:{
-        type: DataTypes.DATE,
+        type: DataTypes.TIME,
         allowNull: false
     },
     daysSelected:{
