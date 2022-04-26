@@ -405,6 +405,33 @@ exports.getCountAllActivations = function (req, res) {
         res.status(500).json(e);
     }
 };
+
+exports.getPendingTags = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            Tag.findAll({
+                attributes: ['name', 'startDatetime', 'updatedAt', 'id'],
+                where: {
+                    [Op.and]: [
+                        {userId: user.id},
+                        {isPending: 1},
+                    ]
+                },
+                order: sequelize.literal('updatedAt DESC')
+            }).then((pendingTags) => {
+                res.status(200).json(pendingTags);
+            })
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+};
 /**
  * get an array of days that contain tag activations
  *

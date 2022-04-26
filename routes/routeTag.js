@@ -7,6 +7,8 @@ router.post("/one", ctrTag.postOne);
 
 router.post("/pending", ctrTag.postPending);
 
+router.get("/pending", ctrTag.getPendingTags);
+
 // Edit one tag activation
 router.put("/one", ctrTag.putOne)
 
