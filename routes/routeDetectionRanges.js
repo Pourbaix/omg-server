@@ -7,6 +7,8 @@ router.post("/one", ctrDetectionRanges.postOne);
 
 router.get("/all", ctrDetectionRanges.getAll);
 
+router.get("/times", ctrDetectionRanges.RangesWithFormattedTimes);
+
 router.get("/countAll", ctrDetectionRanges.getCountAll);
 
 router.get("/detect", ctrDetectionRanges.detectEventInRange);

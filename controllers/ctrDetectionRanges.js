@@ -1,6 +1,7 @@
 const DetectionRanges = require("../models/modelDetectionRanges");
 const Bolus = require("../models/modelBolus");
 const User = require("../models/modelUser");
+const Tag = require("../models/modelTag");
 const seq = require("../config/config");
 const sequelize = seq.sequelize;
 const Sequelize = seq.Sequelize;
@@ -70,7 +71,29 @@ exports.getAll = function (req, res) {
     }
 }
 
-exports.detectEventInRange = function (req, res) {
+exports.getCountAll = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            DetectionRanges.count({
+                where: {
+                    userId: user.id
+                }
+            }).then((data) => {
+                res.status(200).json(data);
+            })
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+};
+
+exports.RangesWithFormattedTimes = function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user) {
             if (err) {
@@ -88,11 +111,74 @@ exports.detectEventInRange = function (req, res) {
                 where: {userId: user.id},
                 limit: 100,
                 order: sequelize.literal('updatedAt DESC')
+            }).then((ranges) => {
+                let cleanedRangesData = [];
+                let daysNumbers = [];
+                ranges.forEach((range, index) => {
+                    let name = range.dataValues.name;
+                    let from = range.dataValues.fromTime;
+                    let to = range.dataValues.toTime;
+                    let days = range.dataValues.daysSelected;
+                    console.log(days.toString(2));
+                    let bitDays = days.toString(2);
+                    let daysConverter = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+                    let j = 0;
+                    for (let i = bitDays.length; i > 0; i--) {
+                        // console.log(bitDays[i-1]);
+                        if (bitDays[i - 1] == "1") {
+                            daysConverter[j] = bitDays[i - 1];
+                            daysNumbers.push(j);
+                        }
+                        j++;
+                    }
+                    console.log(daysConverter);
+                    console.log(daysNumbers);
+                    cleanedRangesData.push({name: name, from: from, to: to, daysNumbers: daysNumbers})
+                });
+                res.status(200).json(cleanedRangesData);
+            });
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+
+exports.detectEventInRange = function (req, res) {
+    // getPendingTags(req, res).then((pendingTags) => res.status(200).json(pendingTags));
+    let pendingTagsFromFunction = getPendingTags(req, res).then(()=>console.log("ok synchronisé"));
+    console.log("----------------"+pendingTagsFromFunction);
+    // getPendingTags(req, res).then((pendingTags) => {
+    //     console.log(typeof pendingTags);
+    //     res.status(200).json({ok: 'ok', pendingTags: pendingTags});
+    // });
+}
+
+// helpers
+
+async function getPendingTags(req, res){
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            let pendingTags = [];
+            return DetectionRanges.findAll({
+                attributes: ['name',
+                    [sequelize.fn('time_format', sequelize.col('fromTime'), '%H:%i'), 'fromTime'],
+                    [sequelize.fn('time_format', sequelize.col('toTime'), '%H:%i'), 'toTime'],
+                    'daysSelected'],
+                where: {userId: user.id},
+                limit: 100,
+                order: sequelize.literal('updatedAt DESC')
             }).then((data) => {
                 data.forEach((res) => {
                     // console.log(res.dataValues);
                     // console.log(res.dataValues.fromTime);
                     // console.log(res.dataValues.toTime);
+                    let name = res.dataValues.name;
                     let from = res.dataValues.fromTime;
                     let to = res.dataValues.toTime;
                     let days = res.dataValues.daysSelected;
@@ -126,7 +212,8 @@ exports.detectEventInRange = function (req, res) {
                         console.log(daysConverter);
                         console.log(daysNumbers);
                         // let count = 0;
-                        data.forEach((res) => {
+                        // let pendingTags = [{pendingName: name, pendingDatetime: datetime}];
+                        data.forEach((res,i) => {
                             // console.log(res.dataValues);
                             // console.log(res.dataValues.extractedDate);
                             // console.log(res.dataValues.extractedTime);
@@ -137,135 +224,56 @@ exports.detectEventInRange = function (req, res) {
                                 // console.log(time); //time is one of the values to insert into Tag
                                 // date.getDay()
                                 if(daysNumbers.includes(new Date(date).getDay())){
-                                    console.log("final match:\ndate: "+ date + "\ntime: "+ time)
+                                    // console.log("final match:\ndate: "+ date + " time: "+ time + " nom: "+ name);
+                                    // console.log("final match:\ndatetimeRounded: "+ roundTo5Minutes(new Date(date+"T"+time)) + " nom: "+ name);
+                                    const datetime = roundTo5MinutesAndAddSummerTime(new Date(date+"T"+time));
+                                    let pendingTag = {};
+                                    pendingTag.pendingName = name;
+                                    pendingTag.pendingDatetime = datetime;
+                                    pendingTags.push(pendingTag);
+                                    // console.log(pendingTags);
                                 }
                             }
                             // console.log(days.toString(2)); // max 111 1111
                             // count++;
                         });
+                        console.log(pendingTags);
                         // console.log("nbre de lignes dans bolus: "+count);
-                    });
 
+                        // pendingTags.forEach((pendingTag) => {
+                        //     Tag.create({
+                        //         name: pendingTag.name,
+                        //         startDatetime: pendingTag.datetime,
+                        //         endDatetime: pendingTag.datetime,
+                        //         userId: user.id,
+                        //         isPending: true,
+                        //         wasAuto: true,
+                        //     }).then(() => {
+                        //         return res.status(200).json("ok");
+                        //     }).catch((err) => {
+                        //         return res.status(500).json("something wrong happened");
+                        //     });
+                        // });
+
+                    });
                     // let pendingTags = [];
                     // data.forEach((pendingTag) => pendingTags.push(pendingTag));
                     // res.status(200).json(pendingTags);
                 });
+                // res.status(200).json({ok: 'ok', });
+                return pendingTags;
             });
         })(req, res);
     } catch (e) {
         res.status(500).json(e);
     }
+
 }
 
-exports.getCountAll = function (req, res) {
-    try {
-        passport.authenticate('local-jwt', {session: false}, function (err, user) {
-            if (err) {
-                return res.json({status: 'Authentication error', message: err});
-            }
-            if (!user) {
-                return res.json({status: 'error', message: "Incorrect token"});
-            }
-            DetectionRanges.count({
-                where: {
-                    userId: user.id
-                }
-            }).then((data) => {
-                res.status(200).json(data);
-            })
-        })(req, res);
-    } catch (e) {
-        res.status(500).json(e);
-    }
-};
 
-function slowAndOvercomplicatedFilter(days){
-    let stringDays = [];
-    // days could be 127, 63, 31, 15, 7, 3, 1, ...
-    // 67 return 0
-    if(days-64 > 0){
-        stringDays.push(0); //sunday
-        if(days-32 > 0){
-            stringDays.push(6); //saturday
-            if(days-16 > 0){
-                stringDays.push(5); //friday
-                if(days-8 > 0){
-                    stringDays.push(4); //thursday
-                    if(days-4 > 0){
-                        stringDays.push(3); //wednesday
-                        if(days-2 > 0){
-                            stringDays.push(2); //tuesday
-                            if(days-1 === 0){
-                                stringDays.push(1); //monday
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else if(days-32 > 0){
-        stringDays.push(6); //saturday
-        if(days-48 > 0){
-            stringDays.push(5); //friday
-            if(days-56 > 0){
-                stringDays.push(4); //thursday
-                if(days-60 > 0){
-                    stringDays.push(3); //wednesday
-                    if(days-62 > 0){
-                        stringDays.push(2); //tuesday
-                        if(days-63 === 0){
-                            stringDays.push(1); //monday
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else if(days-16 > 0){
-        stringDays.push(5); //friday
-        if(days-24 > 0){
-            stringDays.push(4); //thursday
-            if(days-28 > 0){
-                stringDays.push(3); //wednesday
-                if(days-30 > 0){
-                    stringDays.push(2); //tuesday
-                    if(days-31 === 0){
-                        stringDays.push(1); //monday
-                    }
-                }
-            }
-        }
-    }
-    else if(days-8 > 0){
-        stringDays.push(4); //thursday
-        if(days-12 > 0){
-            stringDays.push(3); //wednesday
-            if(days-14 > 0){
-                stringDays.push(2); //tuesday
-                if(days-15 === 0){
-                    stringDays.push(1); //monday
-                }
-            }
-        }
-    }
-    else if(days-4 > 0){
-        stringDays.push(3); //wednesday
-        if(days-6 > 0){
-            stringDays.push(2); //tuesday
-            if(days-7 === 0){
-                stringDays.push(1); //monday
-            }
-        }
-    }
-    else if(days-2 > 0){
-        stringDays.push(2); //tuesday
-        if(days-1 === 0){
-            stringDays.push(1); //monday
-        }
-    }
-    else if(days-1 === 0){
-        stringDays.push(1); //monday
-    }
-    console.log(stringDays);
+function roundTo5MinutesAndAddSummerTime(date) {
+    let coeff = 1000 * 60 * 5;
+    let rounded = new Date(Math.round(date.getTime() / coeff) * coeff);
+
+    return new Date(rounded.setHours(rounded.getHours()+1));
 }
