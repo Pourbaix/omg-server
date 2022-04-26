@@ -318,7 +318,12 @@ exports.getTagsHistoryByActivationTime = function (req, res) {
                             startDatetime: {
                                 [Op.lt]: datetime.toISOString()
                             }
-                        }
+                        },
+                        {
+                            isPending: {
+                                [Op.not]: true,
+                            }
+                        },
                     ]
                 },
                 limit: 10,
@@ -363,7 +368,12 @@ exports.getTagsHistory = function (req, res) {
                             updatedAt: {
                                 [Op.lt]: datetime.toISOString()
                             }
-                        }
+                        },
+                        {
+                            isPending: {
+                                [Op.not]: true,
+                            }
+                        },
                     ]
                 },
                 limit: 10,
