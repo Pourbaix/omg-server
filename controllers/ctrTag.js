@@ -41,6 +41,52 @@ exports.postOne = function (req, res) {
         res.status(500).json(e);
     }
 }
+exports.postPending = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.status(500).json("Authentication error")
+            }
+            if (!user) {
+                return res.status(401).json("Incorrect token")
+            }
+            for(const pendingTag of req.body.pendingTags){
+                await Tag.findOne(
+                    { logging: false,
+                        where: {
+                            [Op.and]: [
+                                {startDatetime: pendingTag.pendingDatetime},
+                                {userId: user.id}
+                            ]
+                        },
+                    }).then((res) => {
+                    if (res){
+                        console.log("Tag already exists.");
+                    }
+                    else {
+                        Tag.create({
+                            name: pendingTag.pendingName,
+                            startDatetime: pendingTag.pendingDatetime,
+                            endDatetime: pendingTag.pendingDatetime,
+                            userId: user.id,
+                            isPending: true,
+                            wasAuto: true,
+                        }).then(() => {
+                            console.log("insert pendingTags");
+                        }).catch((err) => {
+                            return res.status(500).json("something wrong happened");
+                        });
+                    }
+                });
+            }
+            return res.status(200).json("ok");
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+
+
 /**
  *  put one tag route controller. Edit an activation tag.
  *

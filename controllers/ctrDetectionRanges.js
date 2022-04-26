@@ -113,7 +113,6 @@ exports.RangesWithFormattedTimes = function (req, res) {
                 order: sequelize.literal('updatedAt DESC')
             }).then((ranges) => {
                 let cleanedRangesData = [];
-                let daysNumbers = [];
                 ranges.forEach((range, index) => {
                     let name = range.dataValues.name;
                     let from = range.dataValues.fromTime;
@@ -122,6 +121,7 @@ exports.RangesWithFormattedTimes = function (req, res) {
                     console.log(days.toString(2));
                     let bitDays = days.toString(2);
                     let daysConverter = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+                    let daysNumbers = [];
                     let j = 0;
                     for (let i = bitDays.length; i > 0; i--) {
                         // console.log(bitDays[i-1]);

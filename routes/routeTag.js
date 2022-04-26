@@ -5,6 +5,8 @@ const ctrTag = require("../controllers/ctrTag");
 // insert a new tag activation
 router.post("/one", ctrTag.postOne);
 
+router.post("/pending", ctrTag.postPending);
+
 // Edit one tag activation
 router.put("/one", ctrTag.putOne)
 
