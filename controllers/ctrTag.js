@@ -433,7 +433,7 @@ exports.getPendingTags = function (req, res) {
                         {isPending: 1},
                     ]
                 },
-                order: sequelize.literal('updatedAt DESC')
+                order: sequelize.literal('startDatetime DESC')
             }).then((pendingTags) => {
                 res.status(200).json(pendingTags);
             })
