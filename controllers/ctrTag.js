@@ -111,7 +111,7 @@ exports.putOne = function (req, res) {
             if (!req.body.tagId) {
                 return res.status(401).json("Missing tagId");
             }
-            Tag.update({name: req.body.tagName, startDatetime: req.body.tagDatetime}, {where: {id: req.body.tagId}}).then(() => {
+            Tag.update({name: req.body.tagName, startDatetime: req.body.tagDatetime, isPending: false}, {where: {id: req.body.tagId}}).then(() => {
                 console.log(req.body);
                 return res.status(200).json("tag successfully edited");
             }).catch((err) => {

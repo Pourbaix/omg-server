@@ -45,6 +45,31 @@ exports.postOne = function (req, res) {
     }
 }
 
+exports.deleteOneRange = async function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            if (!req.body.rangeId) {
+                return res.status(401).json("Missing rangeId");
+            }
+            let response = await DetectionRanges.destroy({
+                where: {
+                    userId: user.id,
+                    id: req.body.rangeId
+                }
+            });
+            res.status(200).json("Range " + req.body.rangeId + " deleted.");
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+
 exports.getAll = function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, function (err, user) {
@@ -56,7 +81,7 @@ exports.getAll = function (req, res) {
             }
 
             DetectionRanges.findAll({
-                attributes: ['name', 'fromTime', 'toTime', 'daysSelected'],
+                attributes: ['name', 'fromTime', 'toTime', 'daysSelected', 'id'],
                 where: {userId: user.id},
                 limit: 100,
                 order: sequelize.literal('updatedAt DESC')
