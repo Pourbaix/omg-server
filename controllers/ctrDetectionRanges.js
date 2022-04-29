@@ -45,6 +45,32 @@ exports.postOne = function (req, res) {
     }
 }
 
+exports.putOne = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.status(500).json("Authentication error")
+            }
+            if (!user) {
+                return res.status(401).json("Incorrect token")
+            }
+            DetectionRanges.update({
+                name: req.body.rangeName,
+                fromTime: req.body.rangeFrom,
+                toTime: req.body.rangeTo,
+                daysSelected: req.body.rangeDaysSelected,
+            }, {where: {id: req.body.rangeId}}).then(() => {
+                return res.status(200).json("ok");
+            }).catch((err) => {
+                console.log(err);
+                return res.status(500).json("something wrong happened");
+            });
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+
 exports.deleteOneRange = async function (req, res) {
     try {
         passport.authenticate('local-jwt', {session: false}, async function (err, user) {

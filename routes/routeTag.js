@@ -10,7 +10,7 @@ router.post("/pending", ctrTag.postPending);
 router.get("/pending", ctrTag.getPendingTags);
 
 // Edit one tag activation
-router.put("/one", ctrTag.putOne)
+router.put("/one", ctrTag.putOne);
 
 // Delete one activation tag
 router.delete('/one', ctrTag.deleteOne);
