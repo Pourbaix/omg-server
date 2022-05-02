@@ -1,3 +1,5 @@
+const useNumberToArrayDayNameNumber =  require("../nodeHooks/useNumberToArrayDayNameNumber");
+
 const DetectionRanges = require("../models/modelDetectionRanges");
 const Bolus = require("../models/modelBolus");
 const User = require("../models/modelUser");
@@ -169,21 +171,22 @@ exports.RangesWithFormattedTimes = function (req, res) {
                     let from = range.dataValues.fromTime;
                     let to = range.dataValues.toTime;
                     let days = range.dataValues.daysSelected;
-                    console.log(days.toString(2));
-                    let bitDays = days.toString(2);
-                    let daysConverter = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-                    let daysNumbers = [];
-                    let j = 0;
-                    for (let i = bitDays.length; i > 0; i--) {
-                        // console.log(bitDays[i-1]);
-                        if (bitDays[i - 1] == "1") {
-                            daysConverter[j] = bitDays[i - 1];
-                            daysNumbers.push(j);
-                        }
-                        j++;
-                    }
-                    console.log(daysConverter);
-                    console.log(daysNumbers);
+                    // console.log(days.toString(2));
+                    // let bitDays = days.toString(2);
+                    // let daysConverter = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+                    // let daysNumbers = [];
+                    // let j = 0;
+                    // for (let i = bitDays.length; i > 0; i--) {
+                    //     // console.log(bitDays[i-1]);
+                    //     if (bitDays[i - 1] == "1") {
+                    //         daysConverter[j] = bitDays[i - 1];
+                    //         daysNumbers.push(j);
+                    //     }
+                    //     j++;
+                    // }
+                    // console.log(daysConverter);
+                    // console.log(daysNumbers);
+                    const daysNumbers = useNumberToArrayDayNameNumber(days);
                     cleanedRangesData.push({name: name, from: from, to: to, daysNumbers: daysNumbers})
                 });
                 res.status(200).json(cleanedRangesData);
@@ -247,21 +250,22 @@ async function getPendingTags(req, res){
                         limit: 10000,
                         order: sequelize.literal('updatedAt DESC')
                     }).then((data) => {
-                        console.log(days.toString(2));
-                        let bitDays = days.toString(2);
-                        let daysNumbers = [];
-                        let daysConverter = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-                        let j = 0;
-                        for(let i = bitDays.length; i > 0; i--){
-                            // console.log(bitDays[i-1]);
-                            if(bitDays[i-1] == "1"){
-                                daysConverter[j] = bitDays[i-1];
-                                daysNumbers.push(j);
-                            }
-                            j++;
-                        }
-                        console.log(daysConverter);
-                        console.log(daysNumbers);
+                        // console.log(days.toString(2));
+                        // let bitDays = days.toString(2);
+                        // let daysNumbers = [];
+                        // let daysConverter = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+                        // let j = 0;
+                        // for(let i = bitDays.length; i > 0; i--){
+                        //     // console.log(bitDays[i-1]);
+                        //     if(bitDays[i-1] == "1"){
+                        //         daysConverter[j] = bitDays[i-1];
+                        //         daysNumbers.push(j);
+                        //     }
+                        //     j++;
+                        // }
+                        // console.log(daysConverter);
+                        // console.log(daysNumbers);
+                        const daysNumbers = useNumberToArrayDayNameNumber(days);
                         // let count = 0;
                         // let pendingTags = [{pendingName: name, pendingDatetime: datetime}];
                         data.forEach((res,i) => {
