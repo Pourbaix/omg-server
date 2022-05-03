@@ -4,11 +4,11 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(t => {
       return Promise.all([
-        queryInterface.addColumn('Data', 'carbInput', {
-          type: Sequelize.DataTypes.INTEGER
+        queryInterface.addColumn('Tags', 'isPending', {
+          type: Sequelize.DataTypes.BOOLEAN
         }, { transaction: t }),
-        queryInterface.addColumn('Data', 'carbInputDatetime', {
-          type: Sequelize.DataTypes.DATE
+        queryInterface.addColumn('Tags', 'wasAuto', {
+          type: Sequelize.DataTypes.BOOLEAN
         }, { transaction: t })
       ]);
     });
@@ -16,8 +16,8 @@ module.exports = {
   down: (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(t => {
       return Promise.all([
-        queryInterface.removeColumn('Data', 'carbInput', { transaction: t }),
-        queryInterface.removeColumn('Data', 'carbInputDatetime', { transaction: t })
+        queryInterface.removeColumn('Tags', 'isPending', { transaction: t }),
+        queryInterface.removeColumn('Tags', 'wasAuto', { transaction: t })
       ]);
     });
   }

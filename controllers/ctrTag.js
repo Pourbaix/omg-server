@@ -28,7 +28,9 @@ exports.postOne = function (req, res) {
                 name: req.body.tag,
                 startDatetime: req.body.startDatetime,
                 endDatetime: req.body.endDatetime,
-                userId: user.id
+                userId: user.id,
+                isPending: false,
+                wasAuto: false,
             }).then(() => {
                 return res.status(200).json("ok");
             }).catch((err) => {
@@ -39,6 +41,52 @@ exports.postOne = function (req, res) {
         res.status(500).json(e);
     }
 }
+exports.postPending = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, async function (err, user) {
+            if (err) {
+                return res.status(500).json("Authentication error")
+            }
+            if (!user) {
+                return res.status(401).json("Incorrect token")
+            }
+            for(const pendingTag of req.body.pendingTags){
+                await Tag.findOne(
+                    { logging: false,
+                        where: {
+                            [Op.and]: [
+                                {startDatetime: pendingTag.pendingDatetime},
+                                {userId: user.id}
+                            ]
+                        },
+                    }).then((res) => {
+                    if (res){
+                        console.log("Tag already exists.");
+                    }
+                    else {
+                        Tag.create({
+                            name: pendingTag.pendingName,
+                            startDatetime: pendingTag.pendingDatetime,
+                            endDatetime: pendingTag.pendingDatetime,
+                            userId: user.id,
+                            isPending: true,
+                            wasAuto: true,
+                        }).then(() => {
+                            console.log("insert pendingTags");
+                        }).catch((err) => {
+                            return res.status(500).json("something wrong happened");
+                        });
+                    }
+                });
+            }
+            return res.status(200).json("ok");
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+}
+
+
 /**
  *  put one tag route controller. Edit an activation tag.
  *
@@ -63,7 +111,7 @@ exports.putOne = function (req, res) {
             if (!req.body.tagId) {
                 return res.status(401).json("Missing tagId");
             }
-            Tag.update({name: req.body.tagName, startDatetime: req.body.tagDatetime}, {where: {id: req.body.tagId}}).then(() => {
+            Tag.update({name: req.body.tagName, startDatetime: req.body.tagDatetime, isPending: false}, {where: {id: req.body.tagId}}).then(() => {
                 console.log(req.body);
                 return res.status(200).json("tag successfully edited");
             }).catch((err) => {
@@ -262,7 +310,7 @@ exports.getTagsHistoryByActivationTime = function (req, res) {
             let datetime = new Date(req.query.datetimeBegin);
 
             Tag.findAll({
-                attributes: ['name', 'startDatetime', 'updatedAt', 'id'],
+                attributes: ['name', 'startDatetime', 'updatedAt', 'id', 'wasAuto'],
                 where: {
                     [Op.and]: [
                         {userId: user.id},
@@ -270,7 +318,12 @@ exports.getTagsHistoryByActivationTime = function (req, res) {
                             startDatetime: {
                                 [Op.lt]: datetime.toISOString()
                             }
-                        }
+                        },
+                        {
+                            isPending: {
+                                [Op.not]: true,
+                            }
+                        },
                     ]
                 },
                 limit: 10,
@@ -307,7 +360,7 @@ exports.getTagsHistory = function (req, res) {
             let datetime = new Date(req.query.datetimeBegin);
 
             Tag.findAll({
-                attributes: ['name', 'startDatetime', 'updatedAt', 'id'],
+                attributes: ['name', 'startDatetime', 'updatedAt', 'id', 'wasAuto'],
                 where: {
                     [Op.and]: [
                         {userId: user.id},
@@ -315,7 +368,12 @@ exports.getTagsHistory = function (req, res) {
                             updatedAt: {
                                 [Op.lt]: datetime.toISOString()
                             }
-                        }
+                        },
+                        {
+                            isPending: {
+                                [Op.not]: true,
+                            }
+                        },
                     ]
                 },
                 limit: 10,
@@ -351,6 +409,33 @@ exports.getCountAllActivations = function (req, res) {
                 }
             }).then((data) => {
                 res.status(200).json(data);
+            })
+        })(req, res);
+    } catch (e) {
+        res.status(500).json(e);
+    }
+};
+
+exports.getPendingTags = function (req, res) {
+    try {
+        passport.authenticate('local-jwt', {session: false}, function (err, user) {
+            if (err) {
+                return res.json({status: 'Authentication error', message: err});
+            }
+            if (!user) {
+                return res.json({status: 'error', message: "Incorrect token"});
+            }
+            Tag.findAll({
+                attributes: ['name', 'startDatetime', 'updatedAt', 'id'],
+                where: {
+                    [Op.and]: [
+                        {userId: user.id},
+                        {isPending: 1},
+                    ]
+                },
+                order: sequelize.literal('startDatetime DESC')
+            }).then((pendingTags) => {
+                res.status(200).json(pendingTags);
             })
         })(req, res);
     } catch (e) {

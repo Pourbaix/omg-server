@@ -1,12 +1,12 @@
 //////////////////////////////////////////////////////
-////////// Sequelize Data model (table) //////////////
+////////// Sequelize Bolus model (table) //////////////
 //////////////////////////////////////////////////////
 
 const seq = require("../config/config");
 const Sequelize = seq.Sequelize, sequelize = seq.sequelize, DataTypes = seq.DataTypes;
-const User = require("./modelUser"), Tag = require('./modelTag');
+const User = require("./modelUser");
 
-const Data = sequelize.define('data',{
+const Bolus = sequelize.define('bolus',{
     id: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -18,16 +18,8 @@ const Data = sequelize.define('data',{
         allowNull: false,
         primaryKey: true
     },
-    glucose:{
+    carbInput:{
         type: DataTypes.INTEGER(3),
-        allowNull: false
-    },
-    pumpSN: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-    importName: {
-        type: DataTypes.TEXT,
         allowNull: false
     },
     userId:{
@@ -41,7 +33,7 @@ const Data = sequelize.define('data',{
     }
 }, {
     sequelize,
-    modelName: 'data',
+    modelName: 'bolus',
 })
 
-module.exports = Data;
+module.exports = Bolus;

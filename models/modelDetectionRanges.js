@@ -1,12 +1,12 @@
 //////////////////////////////////////////////////////
-/////////// Sequelize Tag model (table) //////////////
+/////////// Sequelize Detection Ranges model (table) //////////////
 //////////////////////////////////////////////////////
 
 const seq = require("../config/config");
 const Sequelize = seq.Sequelize, Model = seq.Model, sequelize = seq.sequelize, DataTypes = seq.DataTypes;
 const User = require("./modelUser");
 
-const Tag = sequelize.define('tag',{
+const DetectionRanges = sequelize.define('detectionranges',{
     id: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -17,12 +17,16 @@ const Tag = sequelize.define('tag',{
         type: DataTypes.STRING,
         allowNull: false
     },
-    startDatetime:{
-        type: DataTypes.DATE,
+    fromTime:{
+        type: DataTypes.TIME,
         allowNull: false
     },
-    endDatetime:{
-        type: DataTypes.DATE,
+    toTime:{
+        type: DataTypes.TIME,
+        allowNull: false
+    },
+    daysSelected:{
+        type: DataTypes.INTEGER(3),
         allowNull: false
     },
     userId:{
@@ -32,17 +36,11 @@ const Tag = sequelize.define('tag',{
             model: User,
             key: 'id'
         }
-    },
-    isPending:{
-        type: DataTypes.BOOLEAN,
-    },
-    wasAuto:{
-        type: DataTypes.BOOLEAN,
     }
 }, {
     sequelize,
-    modelName: 'tag',
+    modelName: 'detectionranges',
 });
 
-module.exports = Tag;
+module.exports = DetectionRanges;
 
