@@ -310,7 +310,7 @@ exports.getTagsHistoryByActivationTime = function (req, res) {
             let datetime = new Date(req.query.datetimeBegin);
 
             Tag.findAll({
-                attributes: ['name', 'startDatetime', 'updatedAt', 'id'],
+                attributes: ['name', 'startDatetime', 'updatedAt', 'id', 'wasAuto'],
                 where: {
                     [Op.and]: [
                         {userId: user.id},
@@ -360,7 +360,7 @@ exports.getTagsHistory = function (req, res) {
             let datetime = new Date(req.query.datetimeBegin);
 
             Tag.findAll({
-                attributes: ['name', 'startDatetime', 'updatedAt', 'id'],
+                attributes: ['name', 'startDatetime', 'updatedAt', 'id', 'wasAuto'],
                 where: {
                     [Op.and]: [
                         {userId: user.id},
