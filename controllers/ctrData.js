@@ -268,6 +268,7 @@ async function insertIfNoDup(dataObj, importName, user){
 
     for (let i = 0; i < dataObj.date.length; i++) {
         // console.log("carb date : " + dataObj.carbDate[i] + "\n" + dataObj.carbTime[i] + "\ncarb : " + dataObj.carbInput[i]);
+        console.log("REGARDE ICI "+dataObj.date[i] + "--------" +dataObj.time[i]);
         let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
         await GlucoseData.findOne(
             { logging: false,
@@ -353,6 +354,7 @@ function getFromMiniMedPump(req, res, user, importName) {
             let colDate = cols.colDate, colTime = cols.colTime, colGlucose = cols.colGlucose, pumpSN = cols.pumpSN, colCarbInput = cols.colCarbInput;
             // console.log("coldate : " + colDate + "\n" + colTime + "\n" + colGlucose + "\ncarb: " + colCarbInput);
             // Retrieve date time and glucose rows
+            let i = 0;
             fileRows.forEach((row) => {
                 if ((typeof row[0]).toString() === "string") {
                     if (row[0].includes("--")) {
@@ -367,7 +369,24 @@ function getFromMiniMedPump(req, res, user, importName) {
                 }
                 if (((typeof row[colDate]).toString() === "string") && ((typeof row[colTime]).toString() === "string") && ((typeof row[colGlucose]).toString() === "string")) {
                     if ((row[colDate].includes('/')) && (row[colTime].includes(':') && (row[colGlucose].length >= 2))) {
-                        dataObj.date.push(row[colDate]);
+                        // if(i===0) {
+                        //     i++;
+                        //     console.log("DATE NEED TO BE REVERSED ? " + row[colDate].substr(0, 3).includes('/'));
+                        //     if(row[colDate].substr(0, 3).includes('/')){
+                        //         let dateArray = row[colDate].split('/');
+                        //         const reversed = dateArray.reverse();
+                        //         console.log(reversed.toString().replace(/,/g, '/'));
+                        //     }
+                        // }
+                        if(row[colDate].substr(0, 3).includes('/')){
+                            let dateArray = row[colDate].split('/');
+                            const reversed = dateArray.reverse();
+                            dataObj.date.push(reversed.toString().replace(/,/g, '/'));
+                        }
+                        else {
+                            dataObj.date.push(row[colDate]);
+                        }
+                        // console.log("DB INSERTION: "+dataObj.date); attention
                         dataObj.time.push(row[colTime]);
                         dataObj.glucose.push(row[colGlucose]);
                         dataObj.pumpSN.push(pumpSN);
@@ -377,7 +396,15 @@ function getFromMiniMedPump(req, res, user, importName) {
                 }
                 if((typeof row[colCarbInput]).toString() === "string" && ((typeof row[colDate]).toString() === "string") && ((typeof row[colTime]).toString() === "string")){
                     if ((row[colDate].includes('/')) && (row[colTime].includes(':') && row[colCarbInput].length > 0)){
-                        dataObj.carbDate.push(row[colDate]);
+                        if(row[colDate].substr(0, 3).includes('/')){
+                            let dateArray = row[colDate].split('/');
+                            const reversed = dateArray.reverse();
+                            dataObj.carbDate.push(reversed.toString().replace(/,/g, '/'));
+                        }
+                        else {
+                            dataObj.carbDate.push(row[colDate]);
+                        }
+                        // dataObj.carbDate.push(row[colDate]);
                         dataObj.carbTime.push(row[colTime]);
                         dataObj.carbInput.push(row[colCarbInput]);
                     }
@@ -403,6 +430,9 @@ function getFromMiniMedPump(req, res, user, importName) {
  */
 function formatDatetime(strDate, strTime){
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
+    console.log("Date " + strDate + "Time " + strTime);
+    // let objDatetime = new Date(strDate+" "+ strTime);
+    console.log("APRES ICI " + objDatetime);
     let coeff = 1000 * 60 * 5;
     return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
 }
