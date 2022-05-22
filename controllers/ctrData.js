@@ -422,23 +422,34 @@ function getFromMiniMedPump(req, res, user, importName) {
         });
 }
 /**
- * parse date for chart display
+ * take date and time to return datetime
  *
- * @param strDate
- * @param strTime
- * @return {Date}
+ * @param strDate 2022/04/21
+ * @param strTime 06:29:00
+ * objDatetime Thu Apr 21 2022 06:29:00 GMT+0200 (heure d’été d’Europe centrale)
+ * @return {string} 2022-04-23T04:55:00.000Z
+ * 2022-04-21T01:55:00.000Z
  */
 function formatDatetime(strDate, strTime){
+    // 2022/04/21 06:29:00
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
+    // Thu Apr 21 2022 06:29:00 GMT+0200 (heure d’été d’Europe centrale)
     console.log("Date " + strDate + "Time " + strTime);
     // let objDatetime = new Date(strDate+" "+ strTime);
     console.log("APRES ICI " + objDatetime);
     let coeff = 1000 * 60 * 5;
-    return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
+    // return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
+    let localDate = new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff);
+    console.log(localDate.toISOString());
+    let isoDate = localDate.toISOString();
+    return isoDate;
 }
 function formatDatetimeWithoutRound(strDate, strTime){
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
-    return new Date(objDatetime.getTime());
+    // return new Date(objDatetime.getTime());
+    let localDate = new Date(objDatetime.getTime());
+    let isoDate = localDate.toISOString();
+    return isoDate;
 }
 /**
  * find the column number of time, date and glucose in the filerows array at start line.
