@@ -210,7 +210,7 @@ exports.deleteFile = async function (req, res) {
                     ImportName: req.body.importName
                 }
             });
-            console.log(response);
+            // console.log(response);
             res.status(200).json("data of '" + req.body.importName + "' import deleted.");
         })(req, res);
     } catch (e) {
@@ -255,7 +255,7 @@ async function getDatetimesDB(user){
         attributes: [[sequelize.fn('DISTINCT', sequelize.col('glucosedata.datetime')), 'date']]
     });
 
-    console.log(typeof await response);
+    // console.log(typeof await response);
     return await response;
 
 }
@@ -268,7 +268,7 @@ async function insertIfNoDup(dataObj, importName, user){
 
     for (let i = 0; i < dataObj.date.length; i++) {
         // console.log("carb date : " + dataObj.carbDate[i] + "\n" + dataObj.carbTime[i] + "\ncarb : " + dataObj.carbInput[i]);
-        console.log("REGARDE ICI "+dataObj.date[i] + "--------" +dataObj.time[i]);
+        // console.log("REGARDE ICI "+dataObj.date[i] + "--------" +dataObj.time[i]);
         let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
         await GlucoseData.findOne(
             { logging: false,
@@ -314,7 +314,7 @@ async function insertIfNoDup(dataObj, importName, user){
             if (res){
                 // console.log("res: "+res+"   index: "+i);
                 // console.log(seeDup++);
-                console.log("dup in Bolus");
+                // console.log("dup in Bolus");
             }
             else {
                 Bolus.create({
@@ -324,7 +324,7 @@ async function insertIfNoDup(dataObj, importName, user){
                 }).then(console.log(seeInsert++));
             }
         });
-        console.log("carb date : " + dataObj.carbDate[z] + "\n" + dataObj.carbTime[z] + "\ncarb : " + dataObj.carbInput[z]);
+        // console.log("carb date : " + dataObj.carbDate[z] + "\n" + dataObj.carbTime[z] + "\ncarb : " + dataObj.carbInput[z]);
 
     }
     return [seeDup, seeInsert];
@@ -413,7 +413,7 @@ function getFromMiniMedPump(req, res, user, importName) {
 
             try {
                 insertIfNoDup(dataObj, importName, user).then((see) => {
-                    console.log(see[0] + "--" + see[1]);
+                    // console.log(see[0] + "--" + see[1]);
                     res.status(200).json({status: 'ok', seeDup: see[0], seeInsert: see[1]});
                 });
             } catch (e) {
@@ -434,13 +434,13 @@ function formatDatetime(strDate, strTime){
     // 2022/04/21 06:29:00
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
     // Thu Apr 21 2022 06:29:00 GMT+0200 (heure d’été d’Europe centrale)
-    console.log("Date " + strDate + "Time " + strTime);
+    // console.log("Date " + strDate + "Time " + strTime);
     // let objDatetime = new Date(strDate+" "+ strTime);
-    console.log("APRES ICI " + objDatetime);
+    // console.log("APRES ICI " + objDatetime);
     let coeff = 1000 * 60 * 5;
     // return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
     let localDate = new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff);
-    console.log(localDate.toISOString());
+    // console.log(localDate.toISOString());
     let isoDate = localDate.toISOString();
     return isoDate;
 }
