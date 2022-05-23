@@ -491,10 +491,10 @@ function formatDatetime(strDate, strTime){
     //                                      new Date(year, monthIndex, day, hours, minutes)
     console.log("(date) localDatetime " + new Date(year, month, day, hours, minutes));
     // let almostFinalDatetime = new Date(year, month, day, hours, minutes);
-
+    let newObjDatetime = new Date(year, month, day, hours, minutes);
     let coeff = 1000 * 60 * 5;
     // return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
-    let almostFinalDatetime = new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff);
+    let almostFinalDatetime = new Date(Math.trunc(newObjDatetime.getTime() / coeff) * coeff);
     console.log(almostFinalDatetime.toISOString());
     let isoDate = almostFinalDatetime.toISOString();
     return isoDate;
