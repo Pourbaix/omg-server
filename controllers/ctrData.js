@@ -438,7 +438,7 @@ function getGMT(strDate, strTime, strTimeToCompare){
     }
     if(myDateHoursOnly>myDate2hoursDeDiffInVPS){
         let GMT = (sgo/3600000)-24;
-        console.log("cetait -24 et maintenant ? " +GMT);
+        console.log("cetait -24 et maintenant c'est -2 : " +GMT);
         return GMT;
     }
     else{
@@ -481,7 +481,8 @@ function formatDatetime(strDate, strTime){
     let year = parseInt(localDate.split('.')[2]);
     let month = parseInt(localDate.split('.')[1]);
     let day = parseInt(localDate.split('.')[0]);
-    let hours = parseInt(localTime.split(':')[0])+gmt;
+    console.log((parseInt(localTime.split(':')[0]))+"°°°°°°°°°°°"+gmt);
+    let hours = (parseInt(localTime.split(':')[0]))+gmt;
     let minutes = parseInt(localTime.split(':')[1]);
 
     console.log("(localDate) year: " + year + " \n(localDate) month: " + month + " \n(localDate) day: " + day);
