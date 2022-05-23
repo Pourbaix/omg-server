@@ -298,7 +298,7 @@ async function insertIfNoDup(dataObj, importName, user){
         });
     }
     for(let z = 0; z < dataObj.carbDate.length; z++){
-        let dbFormatDatetime = await formatDatetimeWithoutRound(dataObj.carbDate[z], dataObj.carbTime[z]);
+        let dbFormatDatetime = formatDatetimeWithoutRound(dataObj.carbDate[z], dataObj.carbTime[z]);
         await Bolus.findOne(
             { logging: false,
                 where: {
@@ -319,7 +319,8 @@ async function insertIfNoDup(dataObj, importName, user){
             else {
                 Bolus.create({
                     datetime: dbFormatDatetime,
-                    carbInput: parseInt(dataObj.carbInput[z]),
+                    // carbInput: parseInt(dataObj.carbInput[z]),
+                    carbInput: 99,
                     userId: user.id,
                 }).then(console.log(seeInsert++));
             }
@@ -444,7 +445,7 @@ function formatDatetime(strDate, strTime){
     let isoDate = localDate.toISOString();
     return isoDate;
 }
-async function formatDatetimeWithoutRound(strDate, strTime){
+function formatDatetimeWithoutRound(strDate, strTime){
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
     // return new Date(objDatetime.getTime());
     let localDate = new Date(objDatetime.getTime());
