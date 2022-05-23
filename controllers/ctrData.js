@@ -422,6 +422,31 @@ function getFromMiniMedPump(req, res, user, importName) {
             }
         });
 }
+
+
+function getGMT(strDate, strTime, strTimeToCompare){
+    let myDate = new Date(strDate+" "+strTime);
+    let myDateHoursOnly = myDate.getHours();
+
+    let myDate2hoursDeDiffInVPS = new Date(strDate+" "+strTimeToCompare);
+    let myDate2hoursDeDiffInVPSHoursOnly = myDate2hoursDeDiffInVPS.getHours();
+
+    let sgo = myDate - myDate2hoursDeDiffInVPS; //-7200000
+    console.log(myDate + "-" + myDate2hoursDeDiffInVPS+ "==="+sgo);
+    if(myDateHoursOnly===myDate2hoursDeDiffInVPS){
+        return 0;
+    }
+    if(myDateHoursOnly>myDate2hoursDeDiffInVPS){
+        let GMT = (sgo/3600000)-24;
+        console.log("cetait -24 et maintenant ? " +GMT);
+        return GMT;
+    }
+    else{
+        let GMT = sgo/3600000;
+        console.log(GMT);
+        return GMT;
+    }
+}
 /**
  * take date and time to return datetime
  *
@@ -431,6 +456,7 @@ function getFromMiniMedPump(req, res, user, importName) {
  * @return {string} 2022-04-23T04:55:00.000Z
  * 2022-04-21T01:55:00.000Z
  */
+
 function formatDatetime(strDate, strTime){
     // 2022/04/21 06:29:00
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
@@ -438,21 +464,24 @@ function formatDatetime(strDate, strTime){
         .toLocaleString('be-BE', {
             timeZone: 'CET'
         });
-    // Thu Apr 21 2022 06:29:00 GMT+0200 (heure d’été d’Europe centrale)
+    // Thu Apr 20 2022 06:44:00 GMT+0200 (heure d’été d’Europe centrale)
     console.log("strDate: " + strDate + "strTime: " + strTime);
     // let objDatetime = new Date(strDate+" "+ strTime);
-    console.log("objDatetime: " + objDatetime);
-    console.log("(string) localDatetime: " + localDatetime); // 20.4.2022, 08:44:00
-    console.log("(invalid) localDatetime: " + new Date(localDatetime)); // Invalid Date
+
+    // console.log("objDatetime: " + objDatetime);
+    // console.log("(string) localDatetime: " + localDatetime); // 20.4.2022, 08:44:00
+    // console.log("(invalid) localDatetime: " + new Date(localDatetime)); // Invalid Date
 
     let localDate = localDatetime.split(',')[0];
     let localTime = localDatetime.split(',')[1];
-    console.log("(localDatetime) date: " + localDate + " \n(localDatetime) time: " + localTime);
+    console.log("(localDatetime) date(balek): " + localDate + " \n(localDatetime) time(-->): " + localTime);
+
+    let gmt = getGMT(strDate, strTime, localTime);
 
     let year = parseInt(localDate.split('.')[2]);
     let month = parseInt(localDate.split('.')[1]);
     let day = parseInt(localDate.split('.')[0]);
-    let hours = parseInt(localTime.split(':')[0]);
+    let hours = parseInt(localTime.split(':')[0])+parseInt(gmt);
     let minutes = parseInt(localTime.split(':')[1]);
 
     console.log("(localDate) year: " + year + " \n(localDate) month: " + month + " \n(localDate) day: " + day);
@@ -460,6 +489,8 @@ function formatDatetime(strDate, strTime){
 
     //                                      new Date(year, monthIndex, day, hours, minutes)
     console.log("(date) localDatetime " + new Date(year, month, day, hours, minutes));
+    // let almostFinalDatetime = new Date(year, month, day, hours, minutes);
+
     let coeff = 1000 * 60 * 5;
     // return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
     let finalDatetime = new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff);
