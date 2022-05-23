@@ -491,7 +491,7 @@ function formatDatetime(strDate, strTime){
     //                                      new Date(year, monthIndex, day, hours, minutes)
     console.log("(date) localDatetime " + new Date(year, month, day, hours, minutes));
     // let almostFinalDatetime = new Date(year, month, day, hours, minutes);
-    let newObjDatetime = new Date(year, month, day, hours, minutes);
+    let newObjDatetime = new Date(year, month-1, day, hours, minutes);
     let coeff = 1000 * 60 * 5;
     // return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
     let almostFinalDatetime = new Date(Math.trunc(newObjDatetime.getTime() / coeff) * coeff);
@@ -519,7 +519,7 @@ function formatDatetimeWithoutRound(strDate, strTime){
     console.log((parseInt(strTime.split(':')[0]))+"°°°°°°°°°°°"+gmt);
     let hours = (parseInt(strTime.split(':')[0]))+gmt;
     let minutes = parseInt(strTime.split(':')[1]);
-    let newObjDatetime = new Date(year, month, day, hours, minutes);
+    let newObjDatetime = new Date(year, month-1, day, hours, minutes);
     let isoDate = newObjDatetime.toISOString();
     return isoDate;
 }
