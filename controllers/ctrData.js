@@ -434,7 +434,10 @@ function getFromMiniMedPump(req, res, user, importName) {
 function formatDatetime(strDate, strTime){
     // 2022/04/21 06:29:00
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
-    let localtest = new Date(Date.UTC(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]));
+    let localtest = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1])
+        .toLocaleString('be-BE', {
+            timeZone: 'CET'
+        });
     // Thu Apr 21 2022 06:29:00 GMT+0200 (heure d’été d’Europe centrale)
     console.log("strDate " + strDate + "strTime " + strTime);
     // let objDatetime = new Date(strDate+" "+ strTime);
