@@ -494,16 +494,33 @@ function formatDatetime(strDate, strTime){
     let newObjDatetime = new Date(year, month, day, hours, minutes);
     let coeff = 1000 * 60 * 5;
     // return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
-    let finalDatetime = new Date(Math.trunc(newObjDatetime.getTime() / coeff) * coeff);
-    // console.log(almostFinalDatetime.toISOString());
-    // let isoDate = almostFinalDatetime.toISOString();
-    return finalDatetime.toString();
+    let almostFinalDatetime = new Date(Math.trunc(newObjDatetime.getTime() / coeff) * coeff);
+    console.log(almostFinalDatetime.toISOString());
+    let isoDate = almostFinalDatetime.toISOString();
+    return isoDate;
 }
 function formatDatetimeWithoutRound(strDate, strTime){
-    let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
-    // return new Date(objDatetime.getTime());
-    let finalDatetime = new Date(objDatetime.getTime());
-    let isoDate = finalDatetime.toISOString();
+    // let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
+    // // return new Date(objDatetime.getTime());
+    // let finalDatetime = new Date(objDatetime.getTime());
+    // let isoDate = finalDatetime.toISOString();
+    // return isoDate;
+    let localDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1])
+        .toLocaleString('be-BE', {
+            timeZone: 'CET'
+        });
+    let localDate = localDatetime.split(',')[0];
+    let localTime = localDatetime.split(',')[1];
+    let gmt = getGMT(strDate, strTime, localTime);
+
+    let year = parseInt(localDate.split('.')[2]);
+    let month = parseInt(localDate.split('.')[1]);
+    let day = parseInt(localDate.split('.')[0]);
+    console.log((parseInt(strTime.split(':')[0]))+"°°°°°°°°°°°"+gmt);
+    let hours = (parseInt(strTime.split(':')[0]))+gmt;
+    let minutes = parseInt(strTime.split(':')[1]);
+    let newObjDatetime = new Date(year, month, day, hours, minutes);
+    let isoDate = newObjDatetime.toISOString();
     return isoDate;
 }
 /**
