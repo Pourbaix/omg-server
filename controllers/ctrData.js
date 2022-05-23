@@ -319,8 +319,8 @@ async function insertIfNoDup(dataObj, importName, user){
             else {
                 Bolus.create({
                     datetime: dbFormatDatetime,
-                    // carbInput: parseInt(dataObj.carbInput[z]),
-                    carbInput: 99,
+                    carbInput: parseInt(dataObj.carbInput[z]),
+                    // carbInput: 99,
                     userId: user.id,
                 }).then(console.log(seeInsert++));
             }
