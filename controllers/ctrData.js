@@ -494,10 +494,10 @@ function formatDatetime(strDate, strTime){
     let newObjDatetime = new Date(year, month, day, hours, minutes);
     let coeff = 1000 * 60 * 5;
     // return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
-    let almostFinalDatetime = new Date(Math.trunc(newObjDatetime.getTime() / coeff) * coeff);
-    console.log(almostFinalDatetime.toISOString());
-    let isoDate = almostFinalDatetime.toISOString();
-    return isoDate;
+    let finalDatetime = new Date(Math.trunc(newObjDatetime.getTime() / coeff) * coeff);
+    // console.log(almostFinalDatetime.toISOString());
+    // let isoDate = almostFinalDatetime.toISOString();
+    return finalDatetime.toString();
 }
 function formatDatetimeWithoutRound(strDate, strTime){
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
