@@ -434,27 +434,44 @@ function getFromMiniMedPump(req, res, user, importName) {
 function formatDatetime(strDate, strTime){
     // 2022/04/21 06:29:00
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
-    let localtest = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1])
+    let localDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1])
         .toLocaleString('be-BE', {
             timeZone: 'CET'
         });
     // Thu Apr 21 2022 06:29:00 GMT+0200 (heure d’été d’Europe centrale)
-    console.log("strDate " + strDate + "strTime " + strTime);
+    console.log("strDate: " + strDate + "strTime: " + strTime);
     // let objDatetime = new Date(strDate+" "+ strTime);
-    console.log("objDatetime " + objDatetime);
-    console.log("localtest " + localtest);
+    console.log("objDatetime: " + objDatetime);
+    console.log("(string) localDatetime: " + localDatetime); // 20.4.2022, 08:44:00
+    console.log("(invalid) localDatetime: " + new Date(localDatetime)); // Invalid Date
+
+    let localDate = localDatetime.split(',')[0];
+    let localTime = localDatetime.split(',')[1];
+    console.log("(localDatetime) date: " + localDate + " \n(localDatetime) time: " + localTime);
+
+    let year = parseInt(localDate.split('.')[2]);
+    let month = parseInt(localDate.split('.')[1]);
+    let day = parseInt(localDate.split('.')[0]);
+    let hours = parseInt(localTime.split(':')[0]);
+    let minutes = parseInt(localTime.split(':')[1]);
+
+    console.log("(localDate) year: " + year + " \n(localDate) month: " + month + " \n(localDate) day: " + day);
+    console.log("(localTime) hours: " + hours + " \n(localTime) minutes: " + minutes);
+
+    //                                      new Date(year, monthIndex, day, hours, minutes)
+    console.log("(date) localDatetime " + new Date(year, month, day, hours, minutes));
     let coeff = 1000 * 60 * 5;
     // return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
-    let localDate = new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff);
-    console.log(localDate.toISOString());
-    let isoDate = localDate.toISOString();
+    let finalDatetime = new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff);
+    console.log(finalDatetime.toISOString());
+    let isoDate = finalDatetime.toISOString();
     return isoDate;
 }
 function formatDatetimeWithoutRound(strDate, strTime){
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
     // return new Date(objDatetime.getTime());
-    let localDate = new Date(objDatetime.getTime());
-    let isoDate = localDate.toISOString();
+    let finalDatetime = new Date(objDatetime.getTime());
+    let isoDate = finalDatetime.toISOString();
     return isoDate;
 }
 /**
