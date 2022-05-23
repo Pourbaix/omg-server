@@ -448,7 +448,7 @@ function formatDatetimeWithoutRound(strDate, strTime){
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
     // return new Date(objDatetime.getTime());
     let localDate = new Date(objDatetime.getTime());
-    let isoDate = localDate.toISOString();
+    let isoDate = new Date(localDate).toISOString();
     return isoDate;
 }
 /**
