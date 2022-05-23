@@ -433,7 +433,7 @@ function getGMT(strDate, strTime, strTimeToCompare){
 
     let sgo = myDate - myDate2hoursDeDiffInVPS; //-7200000
     console.log(myDate + "-" + myDate2hoursDeDiffInVPS+ "==="+sgo);
-    if(myDateHoursOnly===myDate2hoursDeDiffInVPS){
+    if(myDateHoursOnly===myDate2hoursDeDiffInVPSHoursOnly){
         return 0;
     }
     if(myDateHoursOnly>myDate2hoursDeDiffInVPS){
