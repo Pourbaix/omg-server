@@ -435,13 +435,13 @@ function formatDatetime(strDate, strTime){
     // 2022/04/21 06:29:00
     let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
     // Thu Apr 21 2022 06:29:00 GMT+0200 (heure d’été d’Europe centrale)
-    // console.log("Date " + strDate + "Time " + strTime);
+    console.log("strDate " + strDate + "strTime " + strTime);
     // let objDatetime = new Date(strDate+" "+ strTime);
-    // console.log("APRES ICI " + objDatetime);
+    console.log("objDatetime " + objDatetime);
     let coeff = 1000 * 60 * 5;
     // return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
     let localDate = new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff);
-    // console.log(localDate.toISOString());
+    console.log(localDate.toISOString());
     let isoDate = localDate.toISOString();
     return isoDate;
 }
