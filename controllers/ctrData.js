@@ -481,9 +481,9 @@ function formatDatetime(strDate, strTime){
     let year = parseInt(localDate.split('.')[2]);
     let month = parseInt(localDate.split('.')[1]);
     let day = parseInt(localDate.split('.')[0]);
-    console.log((parseInt(localTime.split(':')[0]))+"°°°°°°°°°°°"+gmt);
-    let hours = (parseInt(localTime.split(':')[0]))+gmt;
-    let minutes = parseInt(localTime.split(':')[1]);
+    console.log((parseInt(strTime.split(':')[0]))+"°°°°°°°°°°°"+gmt);
+    let hours = (parseInt(strTime.split(':')[0]))+gmt;
+    let minutes = parseInt(strTime.split(':')[1]);
 
     console.log("(localDate) year: " + year + " \n(localDate) month: " + month + " \n(localDate) day: " + day);
     console.log("(localTime) hours: " + hours + " \n(localTime) minutes: " + minutes);
