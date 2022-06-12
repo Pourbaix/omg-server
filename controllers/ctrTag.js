@@ -50,6 +50,7 @@ exports.postPending = function (req, res) {
             if (!user) {
                 return res.status(401).json("Incorrect token")
             }
+            let existingTag = 0;
             for(const pendingTag of req.body.pendingTags){
                 await Tag.findOne(
                     { logging: false,
@@ -62,6 +63,7 @@ exports.postPending = function (req, res) {
                     }).then((res) => {
                     if (res){
                         console.log("Tag already exists.");
+                        existingTag++;
                     }
                     else {
                         Tag.create({
@@ -79,7 +81,12 @@ exports.postPending = function (req, res) {
                     }
                 });
             }
-            return res.status(200).json("ok");
+            if(existingTag == req.body.pendingTags.length){
+                return res.status(200).json("alreadyexists");
+            }
+            else{
+                return res.status(200).json("redirect");
+            }
         })(req, res);
     } catch (e) {
         res.status(500).json(e);
@@ -111,6 +118,7 @@ exports.putOne = function (req, res) {
             if (!req.body.tagId) {
                 return res.status(401).json("Missing tagId");
             }
+            // ERROR: req.body.tagDatetime contient une date qui n'est pas iso, c'est réglé normalement.
             Tag.update({name: req.body.tagName, startDatetime: req.body.tagDatetime, isPending: false}, {where: {id: req.body.tagId}}).then(() => {
                 console.log(req.body);
                 return res.status(200).json("tag successfully edited");
