@@ -561,7 +561,8 @@ exports.getTagsFromName = async function (tagName, userId, fromToDate = null, we
             attributes: ['startDatetime'],
             where: {
                 userId: userId,
-                name: tagName
+                name: tagName,
+                isPending: 0
             }
         };
         if (fromToDate) {
