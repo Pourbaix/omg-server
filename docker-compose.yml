@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+    dev-db:
+        image: mariadb
+        container_name: omgdb
+        restart: always
+        ports:
+            - 3306:3306
+        environment:
+            MARIADB_USER: ${DB_USERNAME}
+            MARIADB_PASSWORD: ${DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD: ${DB_ROOTPASSWORD}
+            MARIADB_DATABASE: ${DB_DATABASE}
