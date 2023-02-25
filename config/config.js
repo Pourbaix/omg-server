@@ -1,15 +1,19 @@
 //////////////////////////////////////////////////////
 ////////// Sequelize initializing file ///////////////
 //////////////////////////////////////////////////////
-const {Sequelize, Model, DataTypes, QueryInterface} = require("sequelize");
+const { Sequelize, Model, DataTypes, QueryInterface } = require("sequelize");
 const db = require("./db"); // database infos file
 const sequelize = new Sequelize(db);
+// console.log(sequelize);
 
-sequelize.authenticate()
-    .then(() => console.log('Connection has been established successfully.'))
-    .catch((error) => console.error('Unable to connect to the database:', error));
+sequelize
+	.authenticate()
+	.then(() => console.log("Connection has been established successfully."))
+	.catch((error) =>
+		console.error("Unable to connect to the database:", error)
+	);
 
-let seq  = {};
+let seq = {};
 seq.sequelize = sequelize; // -> instance sequelize
 seq.Sequelize = Sequelize; // -> librairy sequelize
 seq.Model = Model;

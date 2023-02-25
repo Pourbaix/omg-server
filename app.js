@@ -1,6 +1,9 @@
 const express = require("express");
 const app = express();
 const session = require("express-session");
+// const AutoImportData = require("./models/modelAutoImportData");
+const autoImportData = require("./autoImportData.js");
+
 require("dotenv").config();
 
 ////////////////// Cors //////////////////////////////
@@ -40,6 +43,7 @@ seq.sequelize
 	.catch((error) =>
 		console.log("An error occurred while Synchronization.\n", error)
 	);
+// AutoImportData.sync();
 //////////////////////////////////////////////////////
 
 ///////////////// Route modules //////////////////////
@@ -58,3 +62,23 @@ app.use("/api/bolus", routeBolus);
 
 app.listen(3001);
 console.log("App listening on port 3001!");
+
+/////////////////auto Import//////////////////////////
+// Execute the import script every 12 hours //
+
+const cron = require("node-cron");
+
+cron.schedule("0 0 0,12 * * *", () => {
+	let date = new Date();
+	console.log("--------------------------------------------");
+	console.log("Running auto import job! " + date);
+	autoImportData.autoImportAllUsers();
+});
+
+// To test, indiquate a comming minute and see the result:
+// cron.schedule(" 33 * * * *", () => {
+// 	console.log("Running auto import job!");
+// 	autoImportData.autoImportAllUsers();
+// });
+
+//////////////////////////////////////////////////////
