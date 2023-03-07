@@ -1,5 +1,5 @@
 const GlucoseData = require("../models/modelGlucoseData");
-const Bolus = require("../models/modelBolus");
+const Insulin = require("../models/modelInsulin");
 const AutoImportData = require("../models/modelAutoImportData");
 const seq = require("../config/config");
 const ctrTag = require("../controllers/ctrTag");
@@ -12,10 +12,86 @@ const { Op } = require("sequelize");
 const { response } = require("express");
 const careLinkImport = require("../careLinkImport.js");
 const autoImportData = require("../autoImportData.js");
+const dateUtils = require("../utils/dateUtils.js");
 
 //////////////////////////////////////////////////////
 /////////////// Routes controllers ///////////////////
 //////////////////////////////////////////////////////
+
+exports.getDataByHour = async function (req, res) {
+	try {
+		passport.authenticate(
+			"local-jwt",
+			{ session: false },
+			async function (err, user) {
+				if (err) {
+					return res.json({
+						status: "Authentication error",
+						message: err,
+					});
+				}
+				if (!user) {
+					return res.json({
+						status: "error",
+						message: "Incorrect token",
+					});
+				}
+				if (
+					parseInt(req.query.hours) < 1 ||
+					parseInt(req.query.hours) > 72
+				) {
+					return res
+						.status(400)
+						.json("The number of hour is not valid");
+				}
+				datas = { GlucoseData: [], InsulinData: [] };
+				let actualDate = dateUtils.normalizedUTC(new Date().getTime());
+				let hours = parseInt(req.query.hours);
+				console.log(hours);
+				let numberOfHoursToSubstract = hours * 3600000;
+				let targetDate = actualDate - numberOfHoursToSubstract;
+				console.log(targetDate);
+				// Récupère les données de glycémie
+				let response = await GlucoseData.findAll({
+					where: {
+						userId: user.id,
+					},
+				}).catch((err) => {
+					return res.status(500).json(err);
+				});
+				datas.GlucoseData = response
+					// On filtre pour ne garder que les données des x dernières heures
+					.filter((x) => {
+						return (
+							dateUtils.normalizedUTC(
+								new Date(x.datetime).getTime()
+							) > targetDate
+						);
+					});
+				// Récupère les données d'insuline
+				response = await Insulin.findAll({
+					where: {
+						userId: user.id,
+					},
+				}).catch((err) => {
+					return res.status(500).json(err);
+				});
+				datas.InsulinData = response.filter((x) => {
+					return (
+						dateUtils.normalizedUTC(
+							new Date(x.datetime).getTime()
+						) > targetDate
+					);
+				});
+
+				return res.status(200).json(datas);
+			}
+		)(req, res);
+	} catch (e) {
+		res.status(500).json(e);
+	}
+};
+
 /**
  *  Chart route controller. retrieves and formats data for the ChartBasic chart
  *
@@ -552,7 +628,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 			dataObj.carbDate[z],
 			dataObj.carbTime[z]
 		);
-		await Bolus.findOne({
+		await Insulin.findOne({
 			logging: false,
 			where: {
 				[Op.and]: [{ datetime: dbFormatDatetime }, { userId: user.id }],
@@ -566,11 +642,13 @@ async function insertIfNoDup(dataObj, importName, user) {
 				// console.log(seeDup++);
 				// console.log("dup in Bolus");
 			} else {
-				Bolus.create({
+				Insulin.create({
 					datetime: dbFormatDatetime,
 					carbInput: parseInt(dataObj.carbInput[z]),
 					// carbInput: 99,
 					userId: user.id,
+					insulinType: "MEAL",
+					insulinDescr: null,
 				}).then(console.log(seeInsert++));
 			}
 		});

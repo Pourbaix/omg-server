@@ -10,6 +10,9 @@ router.post("/file", upload.single("file"), ctrData.postFile);
 // Add autoImport account configuration
 router.post("/autoImportAccount", ctrData.addAutoImportAccountData);
 
+// Get last 24h data to display on chart
+router.get("/last24hData", ctrData.getDataByHour);
+
 // Import the data from the carelink server
 router.get("/autoImportData", ctrData.autoImportData);
 
