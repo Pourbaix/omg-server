@@ -19,4 +19,5 @@ seq.Sequelize = Sequelize; // -> librairy sequelize
 seq.Model = Model;
 seq.DataTypes = DataTypes;
 seq.QueryInterface = QueryInterface;
+seq.development = db;
 module.exports = seq;
