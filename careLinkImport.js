@@ -114,6 +114,13 @@ class CareLinkClient {
 
 	///////////////////////////////////////////////////////////////
 
+	clearAllCookies() {
+		this.jar.removeAllCookies((e) => {
+			console.log("An error has occured while removing old cookies!!!");
+			return e;
+		});
+	}
+
 	stringStrip(string, caract) {
 		/////////////////////////////////////////////////////////
 		// function stringStrip(string: string, caract: string)
@@ -503,6 +510,7 @@ async function getLast24DataObject(username, password, country) {
 	let connexion = new CareLinkClient(username, password, country);
 	await connexion.executeLoginProcedure();
 	let recentData = await connexion.getRecentData();
+	// connexion.clearAllCookies();
 	return recentData;
 }
 

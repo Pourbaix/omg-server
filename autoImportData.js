@@ -1,8 +1,11 @@
 require("dotenv").config();
-const User = require("./models/modelUser");
+// const User = require("./models/modelUser");
 const GlocuseData = require("./models/modelGlucoseData");
+const Insulin = require("./models/modelInsulin");
 const AutoImportData = require("./models/modelAutoImportData");
 const careLinkImport = require("./careLinkImport.js");
+const ct = require("countries-and-timezones");
+const dateUtils = require("./utils/dateUtils.js");
 
 //////////IMPORT SEQUELIZE TO MAKE QUERY//////////////
 const seq = require("./config/config");
@@ -25,26 +28,117 @@ async function autoImport(userId) {
 		userInfo.dataValues.medtronicPassword,
 		userInfo.dataValues.country
 	);
-	let lastDataImportedFormated = new Date(userInfo.lastDataUpdate).getTime();
-	console.log(new Date(lastDataImportedFormated));
+
+	let lastDataImportedFormated = dateUtils.normalizedUTC(
+		new Date(userInfo.lastDataUpdate).getTime()
+	);
+	console.log(lastDataImportedFormated);
 	let glucoseData = data["sgs"];
+	let insulinData = data["markers"];
+	let insulinFilter = ["INSULIN", "AUTO_BASAL_DELIVERY", "MEAL"];
 	let pumpSerial = data["medicalDeviceSerialNumber"];
 	let importName = "AUTO-IMPORTED";
 	let lastDatetimeImport = userInfo.lastDataUpdate;
 
-	// console.log(glucoseData);
+	// console.log(insulinData);
+	for (let e in insulinData) {
+		let existCheck = await Insulin.findOne({
+			where: {
+				datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
+					userInfo.dataValues.country,
+					insulinData[e].dateTime
+				),
+				insulinType: insulinData[e]["type"],
+			},
+		});
+		if (existCheck) {
+			// console.log("Already exist!");
+		} else {
+			if (insulinData[e].dateTime) {
+				let additionnalData = {};
+				if (insulinData[e]["type"] == insulinFilter[0]) {
+					// type = "INSULIN"
+					additionnalData = {
+						activationType: insulinData[e].activationType,
+						programmedFastAmount:
+							insulinData[e].programmedFastAmount,
+						programmedDuration: insulinData[e].programmedDuration,
+						deliveredFastAmount: insulinData[e].deliveredFastAmount,
+						bolusType: insulinData[e].bolusType,
+					};
+					Insulin.create({
+						datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
+							userInfo.dataValues.country,
+							insulinData[e].dateTime
+						),
+						carbInput: 0,
+						userId: userId,
+						insulinType: insulinFilter[0],
+						insulinDescr: JSON.stringify(additionnalData),
+					}).catch((e) => {
+						console.log(e);
+					});
+				} else if (insulinData[e]["type"] == insulinFilter[1]) {
+					// type = "AUTO_BASAL_DELIVERY"
+					additionnalData = {
+						bolusAmount: insulinData[e].bolusAmount,
+					};
+					Insulin.create({
+						datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
+							userInfo.dataValues.country,
+							insulinData[e].dateTime
+						),
+						carbInput: 0,
+						userId: userId,
+						insulinType: insulinFilter[1],
+						insulinDescr: JSON.stringify(additionnalData),
+					}).catch((e) => {
+						console.log(e);
+					});
+				} else if (insulinData[e]["type"] == insulinFilter[2]) {
+					// type = "MEAL"
+					Insulin.create({
+						datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
+							userInfo.dataValues.country,
+							insulinData[e].dateTime
+						),
+						carbInput: insulinData[e].amount,
+						userId: userId,
+						insulinType: insulinFilter[2],
+						insulinDescr: null,
+					}).catch((e) => {
+						console.log(e);
+					});
+				}
+			}
+		}
+	}
 	for (let i in glucoseData) {
 		if (glucoseData[i].datetime) {
-			let formatedDate = new Date(glucoseData[i].datetime).getTime();
+			let formatedDate = dateUtils.normalizeUTCWithCountry(
+				userInfo.dataValues.country,
+				dateUtils.normalizedUTC(
+					new Date(glucoseData[i].datetime).getTime()
+				)
+			);
 			if (formatedDate > lastDataImportedFormated) {
 				GlocuseData.create({
-					datetime: glucoseData[i].datetime,
+					datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
+						userInfo.dataValues.country,
+						glucoseData[i].datetime
+					),
 					glucose: parseInt(glucoseData[i].sg),
 					pumpSN: pumpSerial,
 					importName: importName,
 					userId: userId,
-				}).catch();
-				lastDatetimeImport = glucoseData[i].datetime;
+				}).catch((e) => {
+					console.log(e);
+				});
+				lastDatetimeImport =
+					dateUtils.toNormalizedUTCISOStringWithCountry(
+						userInfo.dataValues.country,
+						glucoseData[i].datetime
+					);
 			}
 		}
 	}
@@ -74,6 +168,7 @@ async function autoImportAllUsers() {
 	}
 	return 1;
 }
+// autoImportAllUsers();
 
 module.exports = {
 	autoImport,
