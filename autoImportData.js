@@ -73,7 +73,7 @@ async function autoImport(userId) {
 						),
 						carbInput: 0,
 						userId: userId,
-						insulinType: insulinFilter[0],
+						insulinType: "CORRECTION",
 						insulinDescr: JSON.stringify(additionnalData),
 					}).catch((e) => {
 						console.log(e);
@@ -114,7 +114,7 @@ async function autoImport(userId) {
 		}
 	}
 	for (let i in glucoseData) {
-		if (glucoseData[i].datetime) {
+		if (glucoseData[i].datetime && parseInt(glucoseData[i].sg) != 0) {
 			let formatedDate = dateUtils.normalizeUTCWithCountry(
 				userInfo.dataValues.country,
 				dateUtils.normalizedUTC(
@@ -147,14 +147,17 @@ async function autoImport(userId) {
 	AutoImportData.update(
 		{ lastDataUpdate: lastDatetimeImport },
 		{ where: { userId: userId } }
-	).catch((err) => {
-		return err;
-	});
+	)
+		.catch((err) => {
+			return err;
+		})
+		.then(() => {
+			return 1;
+		});
 
 	/////////////CLOSE SEQ CONNECTION////////////////////
 	// await seq.sequelize.close();
 	/////////////////////////////////////////////////////
-	return 1;
 }
 async function autoImportAllUsers() {
 	let userList = await AutoImportData.findAll({ attributes: ["userId"] });

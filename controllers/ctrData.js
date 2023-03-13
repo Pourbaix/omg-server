@@ -366,7 +366,11 @@ exports.getImportNames = async function (req, res) {
 					],
 				});
 				res.status(200).json(
-					response.map((name) => name.dataValues.importName)
+					response
+						.map((name) => name.dataValues.importName)
+						.filter((x) => {
+							return x != "AUTO-IMPORTED";
+						})
 				);
 			}
 		)(req, res);
@@ -562,8 +566,12 @@ exports.autoImportData = async (req, res) => {
 						.json("User hasn't configured the autoimport!");
 				}
 				// console.log(response.dataValues.userId);
-				await autoImportData.autoImport(response.dataValues.userId);
-				res.status(200).json("Data imported");
+				await autoImportData
+					.autoImport(response.dataValues.userId)
+					.then(() => {
+						console.log("Auto import finished");
+						res.status(200).json("Data imported");
+					});
 			}
 		)(req, res);
 	} catch (e) {
