@@ -25,8 +25,35 @@ function toNormalizedUTCISOStringWithCountry(country, date) {
 	return newIso.toISOString();
 }
 
+function roundTo5Minutes(date) {
+	if (date % 5 == 0) {
+		return date;
+	}
+	let minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+	let roundedTime = 0;
+	for (let i in minutesList) {
+		if (minutesList[i] < date) {
+			roundedTime = minutesList[i];
+		} else {
+			return roundedTime;
+		}
+	}
+	return roundedTime;
+}
+
+function ISOTo5Minutes(ISODate) {
+	let newDate = new Date(ISODate);
+	let minutes = newDate.getMinutes();
+	let newMinutes = roundTo5Minutes(minutes);
+	newDate.setMinutes(newMinutes);
+	newDate.setSeconds(0);
+	return newDate.toISOString();
+}
+
 module.exports = {
 	normalizedUTC,
 	normalizeUTCWithCountry,
 	toNormalizedUTCISOStringWithCountry,
+	roundTo5Minutes,
+	ISOTo5Minutes,
 };

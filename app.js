@@ -1,9 +1,9 @@
 const express = require("express");
 const app = express();
 const session = require("express-session");
-// const AutoImportData = require("./models/modelAutoImportData");
+const AutoImportData = require("./models/modelAutoImportData");
 const Insulin = require("./models/modelInsulin");
-const autoImportData = require("./autoImportData.js");
+const autoImportData = require("./utils/autoImportData");
 
 require("dotenv").config();
 
@@ -46,7 +46,7 @@ seq.sequelize
 		console.log("An error occurred while Synchronization.\n", error)
 	);
 // AutoImportData.sync();
-// Insulin.drop();
+// // Insulin.drop();
 // Insulin.sync({ alter: true });
 
 // seq.sequelize

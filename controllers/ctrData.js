@@ -10,8 +10,8 @@ const fs = require("fs");
 const passport = require("../app");
 const { Op } = require("sequelize");
 const { response } = require("express");
-const careLinkImport = require("../careLinkImport.js");
-const autoImportData = require("../autoImportData.js");
+const careLinkImport = require("../utils/careLinkImport.js");
+const autoImportData = require("../utils/autoImportData.js");
 const dateUtils = require("../utils/dateUtils.js");
 
 //////////////////////////////////////////////////////
@@ -47,10 +47,10 @@ exports.getDataByHour = async function (req, res) {
 				datas = { GlucoseData: [], InsulinData: [] };
 				let actualDate = dateUtils.normalizedUTC(new Date().getTime());
 				let hours = parseInt(req.query.hours);
-				console.log(hours);
+				// console.log(hours);
 				let numberOfHoursToSubstract = hours * 3600000;
 				let targetDate = actualDate - numberOfHoursToSubstract;
-				console.log(targetDate);
+				// console.log(targetDate);
 				// Récupère les données de glycémie
 				let response = await GlucoseData.findAll({
 					where: {

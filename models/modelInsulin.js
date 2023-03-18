@@ -15,12 +15,12 @@ const Insulin = sequelize.define(
 			type: DataTypes.UUID,
 			defaultValue: Sequelize.UUIDV4,
 			allowNull: false,
-			primaryKey: true,
+			primaryKey: false,
 		},
 		datetime: {
 			type: DataTypes.DATE,
 			allowNull: false,
-			primaryKey: false,
+			primaryKey: true,
 		},
 		carbInput: {
 			type: DataTypes.INTEGER(3),
@@ -30,6 +30,7 @@ const Insulin = sequelize.define(
 			type: DataTypes.STRING,
 			allowNull: false,
 			defaultValue: "bolus",
+			primaryKey: true,
 		},
 		insulinDescr: {
 			type: DataTypes.JSON,
@@ -43,7 +44,7 @@ const Insulin = sequelize.define(
 				model: User,
 				key: "id",
 			},
-			primaryKey: false,
+			primaryKey: true,
 		},
 	},
 	{

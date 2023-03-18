@@ -1,14 +1,15 @@
 require("dotenv").config();
 // const User = require("./models/modelUser");
-const GlocuseData = require("./models/modelGlucoseData");
-const Insulin = require("./models/modelInsulin");
-const AutoImportData = require("./models/modelAutoImportData");
+const GlocuseData = require("../models/modelGlucoseData");
+const Insulin = require("../models/modelInsulin");
+const AutoImportData = require("../models/modelAutoImportData");
 const careLinkImport = require("./careLinkImport.js");
-const ct = require("countries-and-timezones");
-const dateUtils = require("./utils/dateUtils.js");
+const dateUtils = require("./dateUtils.js");
 
 //////////IMPORT SEQUELIZE TO MAKE QUERY//////////////
-const seq = require("./config/config");
+const seq = require("../config/config");
+const GlucoseData = require("../models/modelGlucoseData");
+const { Op } = require("sequelize");
 console.log("seq established");
 /////////////////////////////////////////////////////
 
@@ -29,10 +30,10 @@ async function autoImport(userId) {
 		userInfo.dataValues.country
 	);
 
-	let lastDataImportedFormated = dateUtils.normalizedUTC(
-		new Date(userInfo.lastDataUpdate).getTime()
-	);
-	console.log(lastDataImportedFormated);
+	// let lastDataImportedFormated = dateUtils.normalizedUTC(
+	// 	new Date(userInfo.lastDataUpdate).getTime()
+	// );
+	// // console.log(lastDataImportedFormated);
 	let glucoseData = data["sgs"];
 	let insulinData = data["markers"];
 	let insulinFilter = ["INSULIN", "AUTO_BASAL_DELIVERY", "MEAL"];
@@ -40,24 +41,24 @@ async function autoImport(userId) {
 	let importName = "AUTO-IMPORTED";
 	let lastDatetimeImport = userInfo.lastDataUpdate;
 
-	// console.log(insulinData);
+	let lastInsulinData = await getLast24HData(0);
 	for (let e in insulinData) {
-		let existCheck = await Insulin.findOne({
-			where: {
-				datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
+		let existCheck = lastInsulinData.filter((x) => {
+			let tempDate = new Date();
+			tempDate.setTime(x.datetime.getTime());
+			return (
+				tempDate.toISOString() ==
+				dateUtils.toNormalizedUTCISOStringWithCountry(
 					userInfo.dataValues.country,
-					insulinData[e].dateTime
-				),
-				insulinType: insulinData[e]["type"],
-			},
+					dateUtils.ISOTo5Minutes(insulinData[e].dateTime)
+				)
+			);
 		});
-		if (existCheck) {
-			// console.log("Already exist!");
-		} else {
+		if (!existCheck.length) {
 			if (insulinData[e].dateTime) {
 				let additionnalData = {};
 				if (insulinData[e]["type"] == insulinFilter[0]) {
-					// type = "INSULIN"
+					// type = "INSULIN" (CORRECTION)
 					additionnalData = {
 						activationType: insulinData[e].activationType,
 						programmedFastAmount:
@@ -69,7 +70,7 @@ async function autoImport(userId) {
 					Insulin.create({
 						datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
 							userInfo.dataValues.country,
-							insulinData[e].dateTime
+							dateUtils.ISOTo5Minutes(insulinData[e].dateTime)
 						),
 						carbInput: 0,
 						userId: userId,
@@ -86,7 +87,7 @@ async function autoImport(userId) {
 					Insulin.create({
 						datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
 							userInfo.dataValues.country,
-							insulinData[e].dateTime
+							dateUtils.ISOTo5Minutes(insulinData[e].dateTime)
 						),
 						carbInput: 0,
 						userId: userId,
@@ -100,7 +101,7 @@ async function autoImport(userId) {
 					Insulin.create({
 						datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
 							userInfo.dataValues.country,
-							insulinData[e].dateTime
+							dateUtils.ISOTo5Minutes(insulinData[e].dateTime)
 						),
 						carbInput: insulinData[e].amount,
 						userId: userId,
@@ -113,19 +114,25 @@ async function autoImport(userId) {
 			}
 		}
 	}
+	let lastGlucoseData = await getLast24HData(1);
 	for (let i in glucoseData) {
 		if (glucoseData[i].datetime && parseInt(glucoseData[i].sg) != 0) {
-			let formatedDate = dateUtils.normalizeUTCWithCountry(
-				userInfo.dataValues.country,
-				dateUtils.normalizedUTC(
-					new Date(glucoseData[i].datetime).getTime()
-				)
-			);
-			if (formatedDate > lastDataImportedFormated) {
+			let existCheck = lastGlucoseData.filter((x) => {
+				let tempDate = new Date();
+				tempDate.setTime(x.datetime.getTime());
+				return (
+					tempDate.toISOString() ==
+					dateUtils.toNormalizedUTCISOStringWithCountry(
+						userInfo.dataValues.country,
+						dateUtils.ISOTo5Minutes(glucoseData[i].datetime)
+					)
+				);
+			});
+			if (!existCheck.length) {
 				GlocuseData.create({
 					datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
 						userInfo.dataValues.country,
-						glucoseData[i].datetime
+						dateUtils.ISOTo5Minutes(glucoseData[i].datetime)
 					),
 					glucose: parseInt(glucoseData[i].sg),
 					pumpSN: pumpSerial,
@@ -137,13 +144,11 @@ async function autoImport(userId) {
 				lastDatetimeImport =
 					dateUtils.toNormalizedUTCISOStringWithCountry(
 						userInfo.dataValues.country,
-						glucoseData[i].datetime
+						dateUtils.ISOTo5Minutes(glucoseData[i].datetime)
 					);
 			}
 		}
 	}
-
-	// console.log(lastDatetimeImport);
 	AutoImportData.update(
 		{ lastDataUpdate: lastDatetimeImport },
 		{ where: { userId: userId } }
@@ -161,9 +166,7 @@ async function autoImport(userId) {
 }
 async function autoImportAllUsers() {
 	let userList = await AutoImportData.findAll({ attributes: ["userId"] });
-	// console.log(userList);
 	for (let item in userList) {
-		// console.log(item);
 		console.log("userId n°: " + userList[item].dataValues.userId);
 		await autoImport(userList[item].dataValues.userId).catch((err) => {
 			return err;
@@ -171,7 +174,45 @@ async function autoImportAllUsers() {
 	}
 	return 1;
 }
-// autoImportAllUsers();
+
+async function getLast24HData(type) {
+	// Retrieves last 24h datas for glucose or insulin
+
+	if (type > 1 || typeof type != "number") {
+		return [];
+	}
+
+	let targetDateMs = new Date().getTime() - 86700000;
+	let finaleDate = new Date();
+	finaleDate.setTime(targetDateMs);
+	finaleDate.setSeconds(0);
+	finaleDate.setMilliseconds(0);
+	let dataList = [];
+	if (type) {
+		let data = await GlucoseData.findAll({
+			where: {
+				datetime: {
+					[Op.gte]: finaleDate.toISOString(),
+				},
+			},
+		});
+		data.map((x) => {
+			dataList.push(x.dataValues);
+		});
+	} else {
+		let data = await Insulin.findAll({
+			where: {
+				datetime: {
+					[Op.gte]: finaleDate.toISOString(),
+				},
+			},
+		});
+		data.map((x) => {
+			dataList.push(x.dataValues);
+		});
+	}
+	return dataList;
+}
 
 module.exports = {
 	autoImport,
