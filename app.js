@@ -47,7 +47,7 @@ seq.sequelize
 	);
 // AutoImportData.sync();
 // // Insulin.drop();
-// Insulin.sync({ alter: true });
+Insulin.sync({ alter: true });
 
 // seq.sequelize
 // 	.query("drop table bolus", {

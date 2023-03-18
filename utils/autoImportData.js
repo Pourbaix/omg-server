@@ -41,7 +41,7 @@ async function autoImport(userId) {
 	let importName = "AUTO-IMPORTED";
 	let lastDatetimeImport = userInfo.lastDataUpdate;
 
-	let lastInsulinData = await getLast24HData(0);
+	let lastInsulinData = await getLast24HData(0, userId);
 	for (let e in insulinData) {
 		let existCheck = lastInsulinData.filter((x) => {
 			let tempDate = new Date();
@@ -114,7 +114,7 @@ async function autoImport(userId) {
 			}
 		}
 	}
-	let lastGlucoseData = await getLast24HData(1);
+	let lastGlucoseData = await getLast24HData(1, userId);
 	for (let i in glucoseData) {
 		if (glucoseData[i].datetime && parseInt(glucoseData[i].sg) != 0) {
 			let existCheck = lastGlucoseData.filter((x) => {
@@ -175,7 +175,7 @@ async function autoImportAllUsers() {
 	return 1;
 }
 
-async function getLast24HData(type) {
+async function getLast24HData(type, userId) {
 	// Retrieves last 24h datas for glucose or insulin
 
 	if (type > 1 || typeof type != "number") {
@@ -194,6 +194,7 @@ async function getLast24HData(type) {
 				datetime: {
 					[Op.gte]: finaleDate.toISOString(),
 				},
+				userId: userId,
 			},
 		});
 		data.map((x) => {
@@ -205,6 +206,7 @@ async function getLast24HData(type) {
 				datetime: {
 					[Op.gte]: finaleDate.toISOString(),
 				},
+				userId: userId,
 			},
 		});
 		data.map((x) => {

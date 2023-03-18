@@ -50,6 +50,12 @@ const Insulin = sequelize.define(
 	{
 		sequelize,
 		modelName: "insulin",
+		indexes: [
+			{
+				unique: true,
+				fields: ["datetime", "userId", "insulinType"],
+			},
+		],
 	}
 );
 
