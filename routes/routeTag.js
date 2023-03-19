@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const ctrTag = require("../controllers/ctrTag");
 
@@ -13,7 +13,7 @@ router.get("/pending", ctrTag.getPendingTags);
 router.put("/one", ctrTag.putOne);
 
 // Delete one activation tag
-router.delete('/one', ctrTag.deleteOne);
+router.delete("/one", ctrTag.deleteOne);
 
 // retrieves all tag activations
 router.get("/all", ctrTag.getNamesFromUserId);
@@ -30,7 +30,6 @@ router.get("/recent", ctrTag.getRecentTagsFromUserId);
 // Retrieve the 10 mosts recent tags based on their activation date.
 router.get("/recentHistorySorted", ctrTag.getTagsHistoryByActivationTime);
 
-
 // Retrieve the 10 mosts recent tags based on their creation date.
 router.get("/recentHistory", ctrTag.getTagsHistory);
 
@@ -41,5 +40,8 @@ router.get("/days", ctrTag.getTagsDays);
 
 // Retrieve an array of tags at a specific day
 router.get("/day", ctrTag.getTagsDay);
+
+// Retrieve all tags that are not associated with data
+router.get("/withNoData", ctrTag.getTagsWithoutData);
 
 module.exports = router;

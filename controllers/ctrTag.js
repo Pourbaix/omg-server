@@ -4,6 +4,7 @@ const sequelize = seq.sequelize;
 const Sequelize = seq.Sequelize;
 const passport = require("../app");
 const { Op } = require("sequelize");
+const GlucoseData = require("../models/modelGlucoseData");
 
 //////////////////////////////////////////////////////
 /////////////// Routes controllers ///////////////////
@@ -735,7 +736,7 @@ exports.getTagsDay = async function (req, res) {
 	}
 };
 
-exports.getTagsWithoutData = async function () {
+exports.getTagsWithoutData = async function (req, res) {
 	try {
 		passport.authenticate(
 			"local-jwt",
@@ -753,13 +754,45 @@ exports.getTagsWithoutData = async function () {
 						message: "Incorrect token",
 					});
 				}
-				let response = await Tag.findAll({
+				// console.log("request done");
+				let tagWithNoDataList = [];
+				let dataList = [];
+				let dataResponse = await GlucoseData.findAll({
 					where: {
 						userId: user.id,
 					},
 				});
+				dataResponse.forEach((element) => {
+					dataList.push(element.dataValues);
+				});
+				let TagResponse = await Tag.findAll({
+					where: {
+						userId: user.id,
+						wasAuto: false,
+					},
+				});
+				TagResponse.forEach((element) => {
+					let startDateMs =
+						element.dataValues.startDatetime.getTime() - 900000;
+					let endDateMs =
+						element.dataValues.startDatetime.getTime() + 900000;
+					// console.log(new Date().setTime(startDateMs).toString());
+					// console.log(new Date().setTime(endDateMs).toString());
+					let correspondingData = dataList.filter((data) => {
+						return (
+							startDateMs <= data.datetime.getTime() &&
+							data.datetime.getTime() <= endDateMs
+						);
+					});
+					// console.log(correspondingData);
+					if (!correspondingData.length) {
+						tagWithNoDataList.push(element.dataValues);
+					}
+				});
+				// console.log(tagWithNoDataList);
+				return res.status(200).json(tagWithNoDataList);
 			}
-		);
+		)(req, res);
 	} catch (e) {
 		res.status(500).json(e);
 	}
