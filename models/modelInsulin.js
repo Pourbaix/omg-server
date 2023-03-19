@@ -53,7 +53,7 @@ const Insulin = sequelize.define(
 		indexes: [
 			{
 				unique: true,
-				fields: ["datetime", "userId", "insulinType"],
+				fields: ["datetime", "userId", "insulinType", "insulinDescr"],
 			},
 		],
 	}
