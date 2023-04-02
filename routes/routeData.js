@@ -11,7 +11,7 @@ router.post("/file", upload.single("file"), ctrData.postFile);
 router.post("/autoImportAccount", ctrData.addAutoImportAccountData);
 
 // Get last 24h data to display on chart
-router.get("/last24hData", ctrData.getDataByHour);
+router.get("/lastXhData", ctrData.getDataByHour);
 
 // Import the data from the carelink server
 router.get("/autoImportData", ctrData.autoImportData);
@@ -36,5 +36,11 @@ router.delete("/file", ctrData.deleteFile);
 
 // Delete all data of a user
 router.delete("/all", ctrData.deleteAll);
+
+// Delete an auto-import configuration for a given user
+router.delete(
+	"/deleteAutoImportConfiguration",
+	ctrData.deleteAutoImportConfiguration
+);
 
 module.exports = router;

@@ -85,7 +85,11 @@ cron.schedule("0 0 0,12 * * *", () => {
 	let date = new Date();
 	console.log("--------------------------------------------");
 	console.log("Running auto import job! " + date);
-	autoImportData.autoImportAllUsers();
+	try {
+		autoImportData.autoImportAllUsers();
+	} catch {
+		console.log("Error with while auto-importing with the CRON Job!!");
+	}
 });
 
 // To test, indiquate a comming minute and see the result:

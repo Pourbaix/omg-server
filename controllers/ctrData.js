@@ -522,6 +522,33 @@ exports.addAutoImportAccountData = async function (req, res) {
 	}
 };
 
+exports.deleteAutoImportConfiguration = async (req, res) => {
+	try {
+		passport.authenticate(
+			"local-jwt",
+			{ session: false },
+			async function (err, user) {
+				console.log("request received for deleting autoimport config");
+				let response = await AutoImportData.findOne({
+					where: {
+						userId: user.id,
+					},
+				});
+				if (response) {
+					await AutoImportData.destroy({
+						where: {
+							userId: user.id,
+						},
+					});
+					res.status(200).json("Config deleted");
+				}
+			}
+		)(req, res);
+	} catch (e) {
+		res.status(500).json(e);
+	}
+};
+
 exports.checkAutoImportConfiguration = async (req, res) => {
 	try {
 		passport.authenticate(
@@ -566,12 +593,24 @@ exports.autoImportData = async (req, res) => {
 						.json("User hasn't configured the autoimport!");
 				}
 				// console.log(response.dataValues.userId);
-				await autoImportData
-					.autoImport(response.dataValues.userId)
-					.then(() => {
-						console.log("Auto import finished");
-						res.status(200).json("Data imported");
-					});
+				try {
+					await autoImportData
+						.autoImport(response.dataValues.userId)
+						.then(() => {
+							console.log("Auto import finished");
+							res.status(200).json("Data imported");
+						})
+						.catch((err) => {
+							console.log(err);
+							console.log("Error while auto-importing data");
+							res.status(500).json("Could not import data!");
+						});
+				} catch {
+					console.log(
+						"Unknow error happend while auto-importing data"
+					);
+					res.status(500).json("Could not import data!");
+				}
 			}
 		)(req, res);
 	} catch (e) {
