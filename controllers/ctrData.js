@@ -618,6 +618,117 @@ exports.autoImportData = async (req, res) => {
 	}
 };
 
+exports.getRangesWithNoData = async (req, res) => {
+	try {
+		passport.authenticate(
+			"local-jwt",
+			{ session: false },
+			async function (err, user) {
+				if (err) {
+					return res.json({
+						status: "Authentication error",
+						message: err,
+					});
+				}
+
+				if (!user) {
+					return res.json({
+						status: "error",
+						message: "Incorrect token",
+					});
+				}
+
+				let response = await GlucoseData.findAll({
+					where: {
+						userId: user.id,
+					},
+				});
+
+				let data_list = response.map((x) => {
+					return x.dataValues;
+				});
+				let period_without_data = [];
+				// console.log(data_list);
+				data_list.forEach((element, index, array) => {
+					if (index < array.length - 1) {
+						let current_datetime = new Date(
+							element.datetime
+						).getTime();
+						let next_datetime = new Date(
+							array[index + 1].datetime
+						).getTime();
+						let diff = next_datetime - current_datetime;
+						if (diff > 300000) {
+							period_without_data.push({
+								start: element.datetime,
+								end: array[index + 1].datetime,
+							});
+						}
+					}
+				});
+				// console.log(period_without_data);
+				res.status(200).json(period_without_data);
+			}
+		)(req, res);
+	} catch (e) {
+		res.status(500).json(e);
+	}
+};
+
+exports.getDataInRange = async (req, res) => {
+	try {
+		passport.authenticate(
+			"local-jwt",
+			{ session: false },
+			async function (err, user) {
+				if (err) {
+					return res.json({
+						status: "Authentication error",
+						message: err,
+					});
+				}
+
+				if (!user) {
+					return res.json({
+						status: "error",
+						message: "Incorrect token",
+					});
+				}
+				let insulineResponse = await Insulin.findAll({
+					where: {
+						datetime: {
+							[Op.gte]: req.query.startDate,
+							[Op.lte]: req.query.endDate,
+						},
+					},
+				});
+
+				let glucoseResponse = await GlucoseData.findAll({
+					where: {
+						datetime: {
+							[Op.gte]: req.query.startDate,
+							[Op.lte]: req.query.endDate,
+						},
+					},
+				});
+
+				let finalData = {
+					insulin: insulineResponse.map((element) => {
+						return element.dataValues;
+					}),
+					glucose: glucoseResponse.map((element) => {
+						return element.dataValues;
+					}),
+				};
+
+				res.status(200).json(finalData);
+			}
+		)(req, res);
+	} catch (e) {
+		res.status(500).json(e);
+	}
+};
+
 //////////////////////////////////////////////////////
 /////////// controllers functions helpers ////////////
 //////////////////////////////////////////////////////

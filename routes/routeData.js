@@ -31,6 +31,12 @@ router.get("/datetime", ctrData.getDataDatetime);
 // Retrieve an array of import names
 router.get("/importnames", ctrData.getImportNames);
 
+// Get all the missing datas
+router.get("/rangesWithNoData", ctrData.getRangesWithNoData);
+
+// Get datas in a given range
+router.get("/getDataInRange", ctrData.getDataInRange);
+
 // Delete data of an import
 router.delete("/file", ctrData.deleteFile);
 
