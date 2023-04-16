@@ -44,4 +44,7 @@ router.get("/day", ctrTag.getTagsDay);
 // Retrieve all tags that are not associated with data
 router.get("/withNoData", ctrTag.getTagsWithoutData);
 
+// Retrieve all tags in a given period
+router.get("/tagsInRange", ctrTag.getTagsInRange);
+
 module.exports = router;

@@ -797,6 +797,58 @@ exports.getTagsWithoutData = async function (req, res) {
 		res.status(500).json(e);
 	}
 };
+
+exports.getTagsInRange = async function (req, res) {
+	try {
+		passport.authenticate(
+			"local-jwt",
+			{ session: false },
+			async function (err, user) {
+				if (err) {
+					return res.json({
+						status: "Authentication error",
+						message: err,
+					});
+				}
+				if (!user) {
+					return res.json({
+						status: "error",
+						message: "Incorrect token",
+					});
+				}
+				let startDate = req.query.startDate;
+				let endDate = req.query.endDate;
+				if (!startDate || !endDate) {
+					return res
+						.status(400)
+						.json("Missing or incorrect parameter");
+				} else {
+					let allTags = await Tag.findAll({
+						where: {
+							userId: user.id,
+							isPending: 0,
+						},
+					});
+					let tagsInPeriod = allTags
+						.map((element) => {
+							return element.dataValues;
+						})
+						.filter((element) => {
+							return (
+								new Date(element.startDatetime) >
+									new Date(startDate) &&
+								new Date(element.endDatetime) <
+									new Date(endDate)
+							);
+						});
+					return res.status(200).json(tagsInPeriod);
+				}
+			}
+		)(req, res);
+	} catch (e) {
+		res.status(500).json(e);
+	}
+};
 //////////////////////////////////////////////////////
 /////////// controllers functions helpers ////////////
 //////////////////////////////////////////////////////
