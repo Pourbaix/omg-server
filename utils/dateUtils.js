@@ -1,5 +1,13 @@
 const ct = require("countries-and-timezones");
 
+// Check if we are in day light saving period or not (summer time or not)
+function hasDST(date = new Date()) {
+	const january = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
+	const july = new Date(date.getFullYear(), 6, 1).getTimezoneOffset();
+
+	return Math.max(january, july) !== date.getTimezoneOffset();
+}
+
 function normalizedUTC(date) {
 	// Used to cancel the Offset of the server
 	let offset = new Date().getTimezoneOffset() * 60000;
@@ -11,7 +19,12 @@ function normalizeUTCWithCountry(country, date) {
 	// Used to cancel the Offset of the datas from the Carelink API
 	// The offest is set by Carelink based on the country code
 	let timezone = ct.getTimezonesForCountry(country);
-	let offset = timezone[0].utcOffset * 60000;
+	let offset = "";
+	if (hasDST(new Date())) {
+		offset = timezone[0].dstOffset * 60000;
+	} else {
+		offset = timezone[0].utcOffset * 60000;
+	}
 	let newDateMs = date - offset;
 	return newDateMs;
 }
