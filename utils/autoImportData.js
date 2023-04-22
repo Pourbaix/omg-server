@@ -41,9 +41,11 @@ async function autoImport(userId) {
 	let importName = "AUTO-IMPORTED";
 	let lastDatetimeImport = userInfo.lastDataUpdate;
 
+	// Ici on récupère les info des 24 dernières heures dans un objet js pour pouvoir faire des comparaisons d'existance après
 	let lastInsulinData = await getLast24HData(0, userId);
 	for (let e in insulinData) {
 		if (insulinData[e].dateTime) {
+			// Check if data already exists
 			let existCheck = lastInsulinData.filter((x) => {
 				let tempDate = new Date();
 				tempDate.setTime(x.datetime.getTime());
@@ -56,23 +58,18 @@ async function autoImport(userId) {
 						dateUtils.toNormalizedUTCISOStringWithCountry(
 							userInfo.dataValues.country,
 							dateUtils.ISOTo5Minutes(insulinData[e].dateTime)
-						) &&
-					x.insulinType == type &&
-					x.insulinDescr == buildAdditionnalData(insulinData[e])
+						) && x.insulinType == type
+					// && x.insulinDescr == buildAdditionnalData(insulinData[e])
 				);
 			});
 			if (!existCheck.length) {
 				let additionnalData = {};
-				if (insulinData[e]["type"] == insulinFilter[0]) {
+				if (
+					insulinData[e]["type"] == insulinFilter[0] &&
+					insulinData[e]["activationType"] == "AUTOCORRECTION"
+				) {
 					// type = "INSULIN" (CORRECTION)
-					// additionnalData = {
-					// 	activationType: insulinData[e].activationType,
-					// 	programmedFastAmount:
-					// 		insulinData[e].programmedFastAmount,
-					// 	programmedDuration: insulinData[e].programmedDuration,
-					// 	deliveredFastAmount: insulinData[e].deliveredFastAmount,
-					// 	bolusType: insulinData[e].bolusType,
-					// };
+
 					additionnalData = buildAdditionnalData(insulinData[e]);
 					Insulin.create({
 						datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
@@ -106,7 +103,34 @@ async function autoImport(userId) {
 					});
 				} else if (insulinData[e]["type"] == insulinFilter[2]) {
 					// type = "MEAL"
-					additionnalData = buildAdditionnalData(insulinData[e]);
+					let correspondingData = insulinData.find((element) => {
+						let targetDate = new Date(insulinData[e]["dateTime"]);
+						let upDate = new Date(
+							targetDate.getTime() + 120000
+						).toISOString();
+
+						return (
+							element["type"] === "INSULIN" &&
+							element["dateTime"] >= insulinData[e]["dateTime"] &&
+							element["dateTime"] < upDate &&
+							element["activationType"] === "RECOMMENDED"
+						);
+					});
+					try {
+						additionnalData = JSON.stringify({
+							activationType: correspondingData.activationType,
+							programmedFastAmount:
+								correspondingData.programmedFastAmount,
+							programmedDuration:
+								correspondingData.programmedDuration,
+							deliveredFastAmount:
+								correspondingData.deliveredFastAmount,
+							bolusType: correspondingData.bolusType,
+						});
+					} catch {
+						console.log(additionnalData);
+						console.log(insulinData[e]);
+					}
 					Insulin.create({
 						datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
 							userInfo.dataValues.country,
@@ -149,10 +173,6 @@ async function autoImport(userId) {
 					userId: userId,
 				}).catch((e) => {
 					console.log(e);
-					// console.log(lastGlucoseData[0]);
-					// console.log(lastGlucoseData[1]);
-					// console.log(lastGlucoseData[2]);
-					// console.log(lastGlucoseData[3]);
 				});
 				lastDatetimeImport =
 					dateUtils.toNormalizedUTCISOStringWithCountry(
@@ -189,7 +209,7 @@ async function autoImportAllUsers() {
 }
 
 async function getLast24HData(type, userId) {
-	// Retrieves last 24h datas for glucose or insulin
+	// Retrieves last 24h datas for glucose or insulin in JS object from DB
 
 	if (type > 1 || typeof type != "number") {
 		return [];
@@ -230,6 +250,7 @@ async function getLast24HData(type, userId) {
 }
 
 function buildAdditionnalData(insulinData) {
+	// Builds the additionnal data JSON string
 	let dataType = insulinData["type"];
 	if (dataType == "INSULIN") {
 		return JSON.stringify({
