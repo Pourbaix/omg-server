@@ -864,6 +864,7 @@ function getFromMiniMedPump(req, res, user, importName) {
 						// console.log("coldate : " + colDate + "\n" + colTime + "\n" + colGlucose + "\ncarb: " + colCarbInput);
 					}
 				}
+				// Glucose
 				if (
 					(typeof row[colDate]).toString() === "string" &&
 					(typeof row[colTime]).toString() === "string" &&
@@ -900,6 +901,7 @@ function getFromMiniMedPump(req, res, user, importName) {
 						// console.log(row[carbInput]);
 					}
 				}
+				// Insulin
 				if (
 					(typeof row[colCarbInput]).toString() === "string" &&
 					(typeof row[colDate]).toString() === "string" &&
