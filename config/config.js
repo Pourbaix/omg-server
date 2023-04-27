@@ -1,9 +1,21 @@
 //////////////////////////////////////////////////////
 ////////// Sequelize initializing file ///////////////
 //////////////////////////////////////////////////////
+require("dotenv").config();
 const { Sequelize, Model, DataTypes, QueryInterface } = require("sequelize");
 const db = require("./db"); // database infos file
-const sequelize = new Sequelize(db);
+const env = process.env.NODE_ENVIRON || "development";
+const dbInfo = db[env];
+const sequelize = new Sequelize(
+	dbInfo.database,
+	dbInfo.username,
+	dbInfo.password,
+	{
+		dialect: "mariadb",
+		port: dbInfo.port,
+		host: dbInfo.host,
+	}
+);
 // console.log(sequelize);
 
 sequelize
@@ -19,5 +31,5 @@ seq.Sequelize = Sequelize; // -> librairy sequelize
 seq.Model = Model;
 seq.DataTypes = DataTypes;
 seq.QueryInterface = QueryInterface;
-seq.development = db;
+seq.development = dbInfo;
 module.exports = seq;

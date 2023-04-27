@@ -11,3 +11,14 @@ services:
             MARIADB_PASSWORD: ${DB_PASSWORD}
             MARIADB_ROOT_PASSWORD: ${DB_ROOTPASSWORD}
             MARIADB_DATABASE: ${DB_DATABASE}
+    test-db:
+        image: mariadb
+        container_name: omgdb_test
+        restart: always
+        ports:
+            - 3307:3306
+        environment:
+            MARIADB_USER: ${TEST_DB_USERNAME}
+            MARIADB_PASSWORD: ${TEST_DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD: ${DB_ROOTPASSWORD}
+            MARIADB_DATABASE: ${TEST_DB_DATABASE}
