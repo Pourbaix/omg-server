@@ -3,7 +3,7 @@ const moment = require("moment-timezone");
 
 // Check if we are in day light saving period or not (summer time or not)
 function hasDST(date = new Date(), zone) {
-	return moment.tz(new Date().toISOString(), zone).isDST();
+	return moment.tz(date.toISOString(), zone).isDST();
 }
 
 function normalizedUTC(date) {
@@ -14,7 +14,7 @@ function normalizedUTC(date) {
 }
 
 function normalizeUTCWithCountry(country, date) {
-	// Used to cancel the Offset of the datas from the Carelink API
+	// Used to cancel the Offset of the data from the Carelink API
 	// The offest is set by Carelink based on the country code
 	let timezone = ct.getTimezonesForCountry(country);
 	let offset = 0;
@@ -67,4 +67,5 @@ module.exports = {
 	toNormalizedUTCISOStringWithCountry,
 	roundTo5Minutes,
 	ISOTo5Minutes,
+	hasDST,
 };
