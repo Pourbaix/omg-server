@@ -696,6 +696,7 @@ exports.getDataInRange = async (req, res) => {
 				}
 				let insulineResponse = await Insulin.findAll({
 					where: {
+						userId: user.id,
 						datetime: {
 							[Op.gte]: req.query.startDate,
 							[Op.lte]: req.query.endDate,
@@ -705,6 +706,7 @@ exports.getDataInRange = async (req, res) => {
 
 				let glucoseResponse = await GlucoseData.findAll({
 					where: {
+						userId: user.id,
 						datetime: {
 							[Op.gte]: req.query.startDate,
 							[Op.lte]: req.query.endDate,
