@@ -4,7 +4,7 @@
 require("dotenv").config();
 const { Sequelize, Model, DataTypes, QueryInterface } = require("sequelize");
 const db = require("./db"); // database infos file
-const env = process.env.NODE_ENVIRON || "development";
+const env = process.env.NODE_ENV || "development";
 const dbInfo = db[env];
 const sequelize = new Sequelize(
 	dbInfo.database,
@@ -14,6 +14,7 @@ const sequelize = new Sequelize(
 		dialect: "mariadb",
 		port: dbInfo.port,
 		host: dbInfo.host,
+		logging: env == "test" ? false : true,
 	}
 );
 // console.log(sequelize);

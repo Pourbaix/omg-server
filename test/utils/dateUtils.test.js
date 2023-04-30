@@ -1,7 +1,7 @@
-const dateUtils = require("./dateUtils.js");
+const dateUtils = require("../../utils/dateUtils.js");
 
 describe("Testing 'hasDST(date: Date, zone: str)' method", () => {
-	test("hasDST on BE with a date in summer time should return true", () => {
+	it("hasDST on BE with a date in summer time should return true", () => {
 		expect(
 			dateUtils.hasDST(
 				new Date("2023-04-26T13:22:30.667Z"),
@@ -10,7 +10,7 @@ describe("Testing 'hasDST(date: Date, zone: str)' method", () => {
 		).toBeTruthy();
 	});
 
-	test("hasDST on BE with a date not in summertime should return false", () => {
+	it("hasDST on BE with a date not in summertime should return false", () => {
 		expect(
 			dateUtils.hasDST(
 				new Date("2023-02-04T13:22:30.667Z"),
@@ -19,7 +19,7 @@ describe("Testing 'hasDST(date: Date, zone: str)' method", () => {
 		).toBeFalsy();
 	});
 
-	test("hasDST in USA with a date not in summertime should return false", () => {
+	it("hasDST in USA with a date not in summertime should return false", () => {
 		expect(
 			dateUtils.hasDST(
 				new Date("2023-11-05T13:22:30.667Z"),
@@ -34,7 +34,7 @@ describe("Testing 'hasDST(date: Date, zone: str)' method", () => {
 		).toBeFalsy();
 	});
 
-	test("hasDST in USA with a date in summertime should return true", () => {
+	it("hasDST in USA with a date in summertime should return true", () => {
 		expect(
 			dateUtils.hasDST(
 				new Date("2023-08-04T13:22:30.667Z"),
@@ -58,7 +58,7 @@ describe("Testing 'hasDST(date: Date, zone: str)' method", () => {
 // });
 
 describe("Testing 'normalizeUTCWithCountry(country: str, date: int)' module", () => {
-	test("Verify that offset is applyed correctly in DST period", () => {
+	it("Verify that offset is applyed correctly in DST period", () => {
 		// CHANGE SYSTEM DATE
 		jest.useFakeTimers("modern");
 		// NEW DATE FOR THE TEST SYSTEM
@@ -74,7 +74,7 @@ describe("Testing 'normalizeUTCWithCountry(country: str, date: int)' module", ()
 		expect(result).toBe(targetDate.getTime());
 		expect(new Date(result).toISOString()).toBe(targetDate.toISOString());
 	});
-	test("Verify that offset is applyed correctly out of DST period", () => {
+	it("Verify that offset is applyed correctly out of DST period", () => {
 		// CHANGE SYSTEM DATE
 		jest.useFakeTimers("modern");
 		// NEW DATE FOR THE TEST SYSTEM
@@ -93,11 +93,11 @@ describe("Testing 'normalizeUTCWithCountry(country: str, date: int)' module", ()
 });
 
 describe("Testing 'toNormalizedUTCISOStringWithCountry(country: str, date: int)' ", () => {
-	test("", () => {});
+	it("", () => {});
 });
 
 describe("Testing 'roundTo5Minutes(date: int)' module", () => {
-	test("Testing that it works correctly", () => {
+	it("Testing that it works correctly", () => {
 		expect(dateUtils.roundTo5Minutes(32)).toBe(30);
 		expect(dateUtils.roundTo5Minutes(57)).toBe(55);
 		expect(dateUtils.roundTo5Minutes(3)).toBe(0);
@@ -108,7 +108,7 @@ describe("Testing 'roundTo5Minutes(date: int)' module", () => {
 });
 
 describe("Testing 'ISOTo5Minutes(date: ISODate)' module", () => {
-	test("Testing that it works correctly", () => {
+	it("Testing that it works correctly", () => {
 		expect(dateUtils.ISOTo5Minutes("2023-08-03T23:43:12.000Z")).toBe(
 			"2023-08-03T23:40:00.000Z"
 		);
