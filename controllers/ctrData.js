@@ -468,9 +468,6 @@ exports.addAutoImportAccountData = async function (req, res) {
 			"local-jwt",
 			{ session: false },
 			async function (err, user) {
-				console.log(req.body["password"]);
-				console.log(req.body["username"]);
-
 				let password = req.body["password"];
 				let username = req.body["username"];
 				let country = req.body["country"];
@@ -484,15 +481,12 @@ exports.addAutoImportAccountData = async function (req, res) {
 					},
 				});
 				if (response) {
-					console.log(response);
 					return res
 						.status(500)
 						.json(
 							"User already has an account configurated! Use another route to update it."
 						);
 				}
-				// TODO: VERIF LA CONNECTION A CARELINK AVANT DE METTRE EN DB
-				// => CREE UNE FONCTION POUR TESTER LA CONNECTION /!\ NE PAS RECUP LES DONNEES => INUTILE
 				try {
 					await careLinkImport.testCredential(
 						username,
@@ -528,7 +522,6 @@ exports.deleteAutoImportConfiguration = async (req, res) => {
 			"local-jwt",
 			{ session: false },
 			async function (err, user) {
-				console.log("request received for deleting autoimport config");
 				let response = await AutoImportData.findOne({
 					where: {
 						userId: user.id,
@@ -555,7 +548,6 @@ exports.checkAutoImportConfiguration = async (req, res) => {
 			"local-jwt",
 			{ session: false },
 			async function (err, user) {
-				console.log("Request received");
 				let response = await AutoImportData.findOne({
 					where: {
 						userId: user.id,
@@ -581,7 +573,6 @@ exports.autoImportData = async (req, res) => {
 			"local-jwt",
 			{ session: false },
 			async function (err, user) {
-				console.log("Request received");
 				let response = await AutoImportData.findOne({
 					where: {
 						userId: user.id,
@@ -592,7 +583,6 @@ exports.autoImportData = async (req, res) => {
 						.status(500)
 						.json("User hasn't configured the autoimport!");
 				}
-				// console.log(response.dataValues.userId);
 				try {
 					await autoImportData
 						.autoImport(response.dataValues.userId)
@@ -648,7 +638,6 @@ exports.getRangesWithNoData = async (req, res) => {
 					return x.dataValues;
 				});
 				let period_without_data = [];
-				// console.log(data_list);
 				data_list.forEach((element, index, array) => {
 					if (index < array.length - 1) {
 						let current_datetime = new Date(
@@ -666,7 +655,6 @@ exports.getRangesWithNoData = async (req, res) => {
 						}
 					}
 				});
-				// console.log(period_without_data);
 				res.status(200).json(period_without_data);
 			}
 		)(req, res);
@@ -747,31 +735,22 @@ async function getDatetimesDB(user) {
 		],
 	});
 
-	// console.log(typeof await response);
 	return await response;
 }
 
 async function insertIfNoDup(dataObj, importName, user) {
 	let seeDup = 0;
 	let seeInsert = 0;
-	// console.log("carb date length: " + dataObj.carbDate.length + "\n" + dataObj.carbTime.length + "\ncarb length: " + dataObj.carbInput.length);
 
 	for (let i = 0; i < dataObj.date.length; i++) {
-		// console.log("carb date : " + dataObj.carbDate[i] + "\n" + dataObj.carbTime[i] + "\ncarb : " + dataObj.carbInput[i]);
-		// console.log("REGARDE ICI "+dataObj.date[i] + "--------" +dataObj.time[i]);
 		let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
 		await GlucoseData.findOne({
 			logging: false,
 			where: {
 				[Op.and]: [{ datetime: dbFormatDatetime }, { userId: user.id }],
 			},
-			// where: {
-			//     datetime: dbFormatDatetime
-			// }
 		}).then((res) => {
 			if (res) {
-				// console.log("res: "+res+"   index: "+i);
-				console.log(seeDup++);
 			} else {
 				GlucoseData.create({
 					datetime: dbFormatDatetime,
@@ -779,7 +758,10 @@ async function insertIfNoDup(dataObj, importName, user) {
 					pumpSN: dataObj.pumpSN[i],
 					importName: importName,
 					userId: user.id,
-				}).then(console.log(seeInsert++));
+				})
+					.then
+					//console.log(seeInsert++)
+					();
 			}
 		});
 	}
@@ -793,14 +775,8 @@ async function insertIfNoDup(dataObj, importName, user) {
 			where: {
 				[Op.and]: [{ datetime: dbFormatDatetime }, { userId: user.id }],
 			},
-			// where: {
-			//     datetime: dbFormatDatetime
-			// }
 		}).then((res) => {
 			if (res) {
-				// console.log("res: "+res+"   index: "+i);
-				// console.log(seeDup++);
-				// console.log("dup in Bolus");
 			} else {
 				Insulin.create({
 					datetime: dbFormatDatetime,
@@ -809,10 +785,9 @@ async function insertIfNoDup(dataObj, importName, user) {
 					userId: user.id,
 					insulinType: "MEAL",
 					insulinDescr: null,
-				}).then(console.log(seeInsert++));
+				}).then();
 			}
 		});
-		// console.log("carb date : " + dataObj.carbDate[z] + "\n" + dataObj.carbTime[z] + "\ncarb : " + dataObj.carbInput[z]);
 	}
 	return [seeDup, seeInsert];
 }
@@ -953,17 +928,17 @@ function getGMT(strDate, strTime, strTimeToCompare) {
 	let myDate2hoursDeDiffInVPSHoursOnly = myDate2hoursDeDiffInVPS.getHours();
 
 	let sgo = myDate - myDate2hoursDeDiffInVPS; //-7200000
-	console.log(myDate + "-" + myDate2hoursDeDiffInVPS + "===" + sgo);
+	// console.log(myDate + "-" + myDate2hoursDeDiffInVPS + "===" + sgo);
 	if (myDateHoursOnly === myDate2hoursDeDiffInVPSHoursOnly) {
 		return 0;
 	}
 	if (myDateHoursOnly > myDate2hoursDeDiffInVPS) {
 		let GMT = sgo / 3600000 - 24;
-		console.log("cetait -24 et maintenant c'est -2 : " + GMT);
+		// console.log("cetait -24 et maintenant c'est -2 : " + GMT);
 		return GMT;
 	} else {
 		let GMT = sgo / 3600000;
-		console.log(GMT);
+		// console.log(GMT);
 		return GMT;
 	}
 }
@@ -996,7 +971,7 @@ function formatDatetime(strDate, strTime) {
 		timeZone: "CET",
 	});
 	// Thu Apr 20 2022 06:44:00 GMT+0200 (heure d’été d’Europe centrale)
-	console.log("strDate: " + strDate + "strTime: " + strTime);
+	// console.log("strDate: " + strDate + "strTime: " + strTime);
 	// let objDatetime = new Date(strDate+" "+ strTime);
 
 	// console.log("objDatetime: " + objDatetime);
@@ -1005,38 +980,38 @@ function formatDatetime(strDate, strTime) {
 
 	let localDate = localDatetime.split(",")[0];
 	let localTime = localDatetime.split(",")[1];
-	console.log(
-		"(localDatetime) date(balek): " +
-			localDate +
-			" \n(localDatetime) time(-->): " +
-			localTime
-	);
+	// console.log(
+	// 	"(localDatetime) date(balek): " +
+	// 		localDate +
+	// 		" \n(localDatetime) time(-->): " +
+	// 		localTime
+	// );
 
 	let gmt = getGMT(strDate, strTime, localTime);
 
 	let year = parseInt(localDate.split(".")[2]);
 	let month = parseInt(localDate.split(".")[1]);
 	let day = parseInt(localDate.split(".")[0]);
-	console.log(parseInt(strTime.split(":")[0]) + "°°°°°°°°°°°" + gmt);
+	// console.log(parseInt(strTime.split(":")[0]) + "°°°°°°°°°°°" + gmt);
 	let hours = parseInt(strTime.split(":")[0]) + gmt;
 	let minutes = parseInt(strTime.split(":")[1]);
 
-	console.log(
-		"(localDate) year: " +
-			year +
-			" \n(localDate) month: " +
-			month +
-			" \n(localDate) day: " +
-			day
-	);
-	console.log(
-		"(localTime) hours: " + hours + " \n(localTime) minutes: " + minutes
-	);
+	// console.log(
+	// 	"(localDate) year: " +
+	// 		year +
+	// 		" \n(localDate) month: " +
+	// 		month +
+	// 		" \n(localDate) day: " +
+	// 		day
+	// );
+	// console.log(
+	// 	"(localTime) hours: " + hours + " \n(localTime) minutes: " + minutes
+	// );
 
 	//                                      new Date(year, monthIndex, day, hours, minutes)
-	console.log(
-		"(date) localDatetime " + new Date(year, month, day, hours, minutes)
-	);
+	// console.log(
+	// 	"(date) localDatetime " + new Date(year, month, day, hours, minutes)
+	// );
 	// let almostFinalDatetime = new Date(year, month, day, hours, minutes);
 	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
 	let coeff = 1000 * 60 * 5;
@@ -1044,7 +1019,7 @@ function formatDatetime(strDate, strTime) {
 	let almostFinalDatetime = new Date(
 		Math.trunc(newObjDatetime.getTime() / coeff) * coeff
 	);
-	console.log(almostFinalDatetime.toISOString());
+	// console.log(almostFinalDatetime.toISOString());
 	let isoDate = almostFinalDatetime.toISOString();
 	return isoDate;
 }
@@ -1070,7 +1045,7 @@ function formatDatetimeWithoutRound(strDate, strTime) {
 	let year = parseInt(localDate.split(".")[2]);
 	let month = parseInt(localDate.split(".")[1]);
 	let day = parseInt(localDate.split(".")[0]);
-	console.log(parseInt(strTime.split(":")[0]) + "°°°°°°°°°°°" + gmt);
+	// console.log(parseInt(strTime.split(":")[0]) + "°°°°°°°°°°°" + gmt);
 	let hours = parseInt(strTime.split(":")[0]) + gmt;
 	let minutes = parseInt(strTime.split(":")[1]);
 	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
