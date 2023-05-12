@@ -124,7 +124,6 @@ describe("Testing glucose data routes", () => {
 				.send();
 			expect(body["glucose"]).to.have.length(7);
 			expect(body["insulin"]).to.have.length(3);
-			console.log(body);
 		});
 
 		it("Testing import with data already existing", async () => {
