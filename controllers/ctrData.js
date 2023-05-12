@@ -811,6 +811,13 @@ async function insertIfNoDup(dataObj, importName, user) {
 			dataObj.carbDate[z],
 			dataObj.carbTime[z]
 		);
+		let description = JSON.stringify({
+			activationType: "RECOMMENDED",
+			programmedFastAmount: dataObj.estimateUnits[z],
+			programmedDuration: 0,
+			deliveredFastAmount: dataObj.estimateUnits[z],
+			bolusType: "FAST",
+		});
 		await Insulin.findOne({
 			logging: false,
 			where: {
@@ -818,6 +825,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 					{ datetime: dbFormatDatetime },
 					{ userId: user.id },
 					{ insulinType: "MEAL" },
+					// { insulinDescr: description },
 				],
 			},
 		}).then((res) => {
@@ -829,13 +837,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 					carbInput: parseInt(dataObj.carbInput[z]),
 					userId: user.id,
 					insulinType: "MEAL",
-					insulinDescr: JSON.stringify({
-						activationType: "RECOMMENDED",
-						programmedFastAmount: dataObj.estimateUnits[z],
-						programmedDuration: 0,
-						deliveredFastAmount: dataObj.estimateUnits[z],
-						bolusType: "FAST",
-					}),
+					insulinDescr: description,
 				}).then(seeInsert++);
 			}
 		});

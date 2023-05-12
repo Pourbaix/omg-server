@@ -118,7 +118,7 @@ describe("Testing glucose data routes", () => {
 		it("Check that glucose data and insulin has been inserted in db", async () => {
 			let { body } = await request(server)
 				.get(
-					"/api/data/getDataInRange?startDate=2023-03-14T10:00:00.000Z&endDate=2023-03-16T10:00:00.000Z"
+					"/api/data/getDataInRange?startDate=2023-03-14T10:00:00.000Z&endDate=2023-05-16T10:00:00.000Z"
 				)
 				.set({ Authorization: `Bearer ${token}` })
 				.send();
