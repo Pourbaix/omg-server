@@ -58,8 +58,9 @@ async function autoImport(userId) {
 						dateUtils.toNormalizedUTCISOStringWithCountry(
 							userInfo.dataValues.country,
 							dateUtils.ISOTo5Minutes(insulinData[e].dateTime)
-						) && x.insulinType == type
-					// && x.insulinDescr == buildAdditionnalData(insulinData[e])
+						) &&
+					x.insulinType == type &&
+					x.insulinDescr == buildAdditionnalData(insulinData[e])
 				);
 			});
 			if (!existCheck.length) {
