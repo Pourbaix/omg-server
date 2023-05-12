@@ -47,10 +47,8 @@ exports.getDataByHour = async function (req, res) {
 				datas = { GlucoseData: [], InsulinData: [] };
 				let actualDate = dateUtils.normalizedUTC(new Date().getTime());
 				let hours = parseInt(req.query.hours);
-				// console.log(hours);
 				let numberOfHoursToSubstract = hours * 3600000;
 				let targetDate = actualDate - numberOfHoursToSubstract;
-				// console.log(targetDate);
 				// Récupère les données de glycémie
 				let response = await GlucoseData.findAll({
 					where: {
@@ -206,14 +204,6 @@ exports.postFile = function (req, res) {
 				if (req.file.originalname.split(".")[1] !== "csv") {
 					return res.status(400).json("Only CSV files are allowed.");
 				}
-				// let response = Data.findAll({
-				//     where: {
-				//         userId: user.id
-				//     },
-				//     attributes: [[sequelize.fn('DISTINCT', sequelize.col('data.datetime')), 'date']]
-				// });
-				// // response.map(date => date.dataValues.date);
-				// console.log(response);
 				switch (req.body.sensorModel) {
 					case "minimed":
 						getFromMiniMedPump(req, res, user, req.body.importName);
@@ -229,6 +219,46 @@ exports.postFile = function (req, res) {
 		res.status(500).json(e);
 	}
 };
+
+exports.postManyData = function (req, res) {
+	try {
+		passport.authenticate(
+			"local-jwt",
+			{ session: false },
+			async function (err, user) {
+				if (err) {
+					return res.json({
+						status: "Authentication error",
+						message: err,
+					});
+				}
+				if (!user) {
+					return res.json({
+						status: "error",
+						message: "Incorrect token",
+					});
+				}
+				try {
+					req.body["glucose_data"].forEach(async (element) => {
+						await GlucoseData.create({
+							datetime: element.datetime,
+							glucose: element.glucose,
+							pumpSN: element.pumpSN,
+							importName: "MANUAL-INDIVIDUAL-POST",
+							userId: user.id,
+						});
+					});
+					res.status(200).json("Data created");
+				} catch (err) {
+					return res.status(500).json("Error while inserting data");
+				}
+			}
+		)(req, res);
+	} catch (e) {
+		res.status(500).json(e);
+	}
+};
+
 /**
  * Get all the days from data
  *
@@ -414,7 +444,6 @@ exports.deleteFile = async function (req, res) {
 						ImportName: req.body.importName,
 					},
 				});
-				// console.log(response);
 				res.status(200).json(
 					"data of '" + req.body.importName + "' import deleted."
 				);
@@ -535,6 +564,7 @@ exports.deleteAutoImportConfiguration = async (req, res) => {
 					});
 					res.status(200).json("Config deleted");
 				}
+				res.status(200).json("Nothing to delete");
 			}
 		)(req, res);
 	} catch (e) {
@@ -682,6 +712,18 @@ exports.getDataInRange = async (req, res) => {
 						message: "Incorrect token",
 					});
 				}
+				if (!req.query.startDate || !req.query.endDate) {
+					res.status(400).json(
+						"One of the two required parameter (startDate or endDate) is not set."
+					);
+				}
+				if (
+					new Date(req.query.startDate) > new Date(req.query.endDate)
+				) {
+					res.status(400).json(
+						"startDate has to be older than endDate."
+					);
+				}
 				let insulineResponse = await Insulin.findAll({
 					where: {
 						userId: user.id,
@@ -741,7 +783,7 @@ async function getDatetimesDB(user) {
 async function insertIfNoDup(dataObj, importName, user) {
 	let seeDup = 0;
 	let seeInsert = 0;
-
+	// Glucose
 	for (let i = 0; i < dataObj.date.length; i++) {
 		let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
 		await GlucoseData.findOne({
@@ -751,6 +793,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 			},
 		}).then((res) => {
 			if (res) {
+				seeDup++;
 			} else {
 				GlucoseData.create({
 					datetime: dbFormatDatetime,
@@ -758,34 +801,42 @@ async function insertIfNoDup(dataObj, importName, user) {
 					pumpSN: dataObj.pumpSN[i],
 					importName: importName,
 					userId: user.id,
-				})
-					.then
-					//console.log(seeInsert++)
-					();
+				}).then(seeInsert++);
 			}
 		});
 	}
+	// Insulin
 	for (let z = 0; z < dataObj.carbDate.length; z++) {
-		let dbFormatDatetime = formatDatetimeWithoutRound(
+		let dbFormatDatetime = formatDatetime(
 			dataObj.carbDate[z],
 			dataObj.carbTime[z]
 		);
 		await Insulin.findOne({
 			logging: false,
 			where: {
-				[Op.and]: [{ datetime: dbFormatDatetime }, { userId: user.id }],
+				[Op.and]: [
+					{ datetime: dbFormatDatetime },
+					{ userId: user.id },
+					{ insulinType: "MEAL" },
+				],
 			},
 		}).then((res) => {
 			if (res) {
+				seeDup++;
 			} else {
 				Insulin.create({
 					datetime: dbFormatDatetime,
 					carbInput: parseInt(dataObj.carbInput[z]),
-					// carbInput: 99,
 					userId: user.id,
 					insulinType: "MEAL",
-					insulinDescr: null,
-				}).then();
+					insulinDescr: JSON.stringify({
+						activationType: "RECOMMENDED",
+						programmedFastAmount: dataObj.estimateUnits[z],
+						programmedDuration: 0,
+						deliveredFastAmount: dataObj.estimateUnits[z],
+						bolusType: "FAST",
+					}),
+				}).then(seeInsert++);
 			}
 		});
 	}
@@ -800,7 +851,6 @@ async function insertIfNoDup(dataObj, importName, user) {
  * @param importName
  */
 function getFromMiniMedPump(req, res, user, importName) {
-	// getDatetimesDB(user).then((response) => console.log(JSON.stringify(response)));
 	const fileRows = [];
 	// open uploaded file
 	csv.parseFile(req.file.path, { delimiter: ";" })
@@ -819,14 +869,15 @@ function getFromMiniMedPump(req, res, user, importName) {
 				carbDate: [],
 				carbTime: [],
 				carbInput: [],
+				estimateUnits: [],
 			};
 			let cols = findInFileRows(fileRows, 0);
 			let colDate = cols.colDate,
 				colTime = cols.colTime,
 				colGlucose = cols.colGlucose,
 				pumpSN = cols.pumpSN,
-				colCarbInput = cols.colCarbInput;
-			// console.log("coldate : " + colDate + "\n" + colTime + "\n" + colGlucose + "\ncarb: " + colCarbInput);
+				colCarbInput = cols.colCarbInput,
+				colEstimateUnits = cols.colEstimateUnits;
 			// Retrieve date time and glucose rows
 			let i = 0;
 			fileRows.forEach((row) => {
@@ -838,7 +889,7 @@ function getFromMiniMedPump(req, res, user, importName) {
 						colGlucose = cols.colGlucose;
 						pumpSN = cols.pumpSN;
 						colCarbInput = cols.colCarbInput;
-						// console.log("coldate : " + colDate + "\n" + colTime + "\n" + colGlucose + "\ncarb: " + colCarbInput);
+						colEstimateUnits = cols.colEstimateUnits;
 					}
 				}
 				// Glucose
@@ -852,15 +903,6 @@ function getFromMiniMedPump(req, res, user, importName) {
 						row[colTime].includes(":") &&
 						row[colGlucose].length >= 2
 					) {
-						// if(i===0) {
-						//     i++;
-						//     console.log("DATE NEED TO BE REVERSED ? " + row[colDate].substr(0, 3).includes('/'));
-						//     if(row[colDate].substr(0, 3).includes('/')){
-						//         let dateArray = row[colDate].split('/');
-						//         const reversed = dateArray.reverse();
-						//         console.log(reversed.toString().replace(/,/g, '/'));
-						//     }
-						// }
 						if (row[colDate].substr(0, 3).includes("/")) {
 							let dateArray = row[colDate].split("/");
 							const reversed = dateArray.reverse();
@@ -870,12 +912,9 @@ function getFromMiniMedPump(req, res, user, importName) {
 						} else {
 							dataObj.date.push(row[colDate]);
 						}
-						// console.log("DB INSERTION: "+dataObj.date); attention
 						dataObj.time.push(row[colTime]);
 						dataObj.glucose.push(row[colGlucose]);
 						dataObj.pumpSN.push(pumpSN);
-						// dataObj.carbInput.push(row[colCarbInput]);
-						// console.log(row[carbInput]);
 					}
 				}
 				// Insulin
@@ -898,16 +937,17 @@ function getFromMiniMedPump(req, res, user, importName) {
 						} else {
 							dataObj.carbDate.push(row[colDate]);
 						}
-						// dataObj.carbDate.push(row[colDate]);
 						dataObj.carbTime.push(row[colTime]);
 						dataObj.carbInput.push(row[colCarbInput]);
+						dataObj.estimateUnits.push(
+							parseFloat(row[colEstimateUnits])
+						);
 					}
 				}
 			});
 
 			try {
-				insertIfNoDup(dataObj, importName, user).then((see) => {
-					// console.log(see[0] + "--" + see[1]);
+				insertIfNoDup(dataObj, importName, user).then(async (see) => {
 					res.status(200).json({
 						status: "ok",
 						seeDup: see[0],
@@ -915,7 +955,9 @@ function getFromMiniMedPump(req, res, user, importName) {
 					});
 				});
 			} catch (e) {
-				res.status(500).json("An error occured while insert data" + e);
+				res.status(500).json(
+					"An error occured while inserting data" + e
+				);
 			}
 		});
 }
@@ -928,17 +970,14 @@ function getGMT(strDate, strTime, strTimeToCompare) {
 	let myDate2hoursDeDiffInVPSHoursOnly = myDate2hoursDeDiffInVPS.getHours();
 
 	let sgo = myDate - myDate2hoursDeDiffInVPS; //-7200000
-	// console.log(myDate + "-" + myDate2hoursDeDiffInVPS + "===" + sgo);
 	if (myDateHoursOnly === myDate2hoursDeDiffInVPSHoursOnly) {
 		return 0;
 	}
 	if (myDateHoursOnly > myDate2hoursDeDiffInVPS) {
 		let GMT = sgo / 3600000 - 24;
-		// console.log("cetait -24 et maintenant c'est -2 : " + GMT);
 		return GMT;
 	} else {
 		let GMT = sgo / 3600000;
-		// console.log(GMT);
 		return GMT;
 	}
 }
@@ -953,14 +992,6 @@ function getGMT(strDate, strTime, strTimeToCompare) {
  */
 
 function formatDatetime(strDate, strTime) {
-	// 2022/04/21 06:29:00
-	let objDatetime = new Date(
-		strDate.substring(0, 4),
-		strDate.substring(5, 7) - 1,
-		strDate.substring(8, 10),
-		strTime.split(":")[0],
-		strTime.split(":")[1]
-	);
 	let localDatetime = new Date(
 		strDate.substring(0, 4),
 		strDate.substring(5, 7) - 1,
@@ -970,65 +1001,27 @@ function formatDatetime(strDate, strTime) {
 	).toLocaleString("be-BE", {
 		timeZone: "CET",
 	});
-	// Thu Apr 20 2022 06:44:00 GMT+0200 (heure d’été d’Europe centrale)
-	// console.log("strDate: " + strDate + "strTime: " + strTime);
-	// let objDatetime = new Date(strDate+" "+ strTime);
-
-	// console.log("objDatetime: " + objDatetime);
-	// console.log("(string) localDatetime: " + localDatetime); // 20.4.2022, 08:44:00
-	// console.log("(invalid) localDatetime: " + new Date(localDatetime)); // Invalid Date
 
 	let localDate = localDatetime.split(",")[0];
 	let localTime = localDatetime.split(",")[1];
-	// console.log(
-	// 	"(localDatetime) date(balek): " +
-	// 		localDate +
-	// 		" \n(localDatetime) time(-->): " +
-	// 		localTime
-	// );
 
 	let gmt = getGMT(strDate, strTime, localTime);
 
 	let year = parseInt(localDate.split(".")[2]);
 	let month = parseInt(localDate.split(".")[1]);
 	let day = parseInt(localDate.split(".")[0]);
-	// console.log(parseInt(strTime.split(":")[0]) + "°°°°°°°°°°°" + gmt);
 	let hours = parseInt(strTime.split(":")[0]) + gmt;
 	let minutes = parseInt(strTime.split(":")[1]);
 
-	// console.log(
-	// 	"(localDate) year: " +
-	// 		year +
-	// 		" \n(localDate) month: " +
-	// 		month +
-	// 		" \n(localDate) day: " +
-	// 		day
-	// );
-	// console.log(
-	// 	"(localTime) hours: " + hours + " \n(localTime) minutes: " + minutes
-	// );
-
-	//                                      new Date(year, monthIndex, day, hours, minutes)
-	// console.log(
-	// 	"(date) localDatetime " + new Date(year, month, day, hours, minutes)
-	// );
-	// let almostFinalDatetime = new Date(year, month, day, hours, minutes);
 	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
 	let coeff = 1000 * 60 * 5;
-	// return new Date(Math.trunc(objDatetime.getTime() / coeff) * coeff)
 	let almostFinalDatetime = new Date(
 		Math.trunc(newObjDatetime.getTime() / coeff) * coeff
 	);
-	// console.log(almostFinalDatetime.toISOString());
 	let isoDate = almostFinalDatetime.toISOString();
 	return isoDate;
 }
 function formatDatetimeWithoutRound(strDate, strTime) {
-	// let objDatetime = new Date(strDate.substring(0, 4), strDate.substring(5, 7) -1, strDate.substring(8, 10), strTime.split(':')[0], strTime.split(':')[1]);
-	// // return new Date(objDatetime.getTime());
-	// let finalDatetime = new Date(objDatetime.getTime());
-	// let isoDate = finalDatetime.toISOString();
-	// return isoDate;
 	let localDatetime = new Date(
 		strDate.substring(0, 4),
 		strDate.substring(5, 7) - 1,
@@ -1045,10 +1038,11 @@ function formatDatetimeWithoutRound(strDate, strTime) {
 	let year = parseInt(localDate.split(".")[2]);
 	let month = parseInt(localDate.split(".")[1]);
 	let day = parseInt(localDate.split(".")[0]);
-	// console.log(parseInt(strTime.split(":")[0]) + "°°°°°°°°°°°" + gmt);
 	let hours = parseInt(strTime.split(":")[0]) + gmt;
 	let minutes = parseInt(strTime.split(":")[1]);
+
 	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
+
 	let isoDate = newObjDatetime.toISOString();
 	return isoDate;
 }
@@ -1064,7 +1058,8 @@ function findInFileRows(fileRows, start) {
 		colTime = -1,
 		colGlucose = -1,
 		pumpSN = "",
-		colCarbInput = -1;
+		colCarbInput = -1,
+		colEstimateUnits = -1;
 	// Find column numbers and pump serial number
 	for (let row = start; row < fileRows.length; row++) {
 		if (
@@ -1072,7 +1067,8 @@ function findInFileRows(fileRows, start) {
 			colTime < 0 ||
 			colGlucose < 0 ||
 			pumpSN === "" ||
-			colCarbInput < 0
+			colCarbInput < 0 ||
+			colEstimateUnits < 0.0
 		) {
 			for (let col = 0; col < fileRows[row].length; col++) {
 				if ((typeof fileRows[row][col]).toString() === "string") {
@@ -1103,13 +1099,26 @@ function findInFileRows(fileRows, start) {
 								fileRows[row][col]
 							);
 					}
+					if (colEstimateUnits < 0) {
+						if (fileRows[row][col] === "BWZ Estimate (U)")
+							colEstimateUnits = fileRows[row].indexOf(
+								fileRows[row][col]
+							);
+					}
 				}
 			}
 		} else {
 			break;
 		}
 	}
-	return { colDate, colTime, colGlucose, pumpSN, colCarbInput };
+	return {
+		colDate,
+		colTime,
+		colGlucose,
+		pumpSN,
+		colCarbInput,
+		colEstimateUnits,
+	};
 }
 /**
  * Retrieve all user's data according to the given tags.

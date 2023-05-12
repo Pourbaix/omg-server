@@ -1,4 +1,7 @@
 const dateUtils = require("../../utils/dateUtils.js");
+// const chai = require("chai");
+
+// const { expect } = chai;
 
 describe("Testing 'hasDST(date: Date, zone: str)' method", () => {
 	it("hasDST on BE with a date in summer time should return true", () => {

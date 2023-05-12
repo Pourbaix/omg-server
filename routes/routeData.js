@@ -10,6 +10,9 @@ router.post("/file", upload.single("file"), ctrData.postFile);
 // Add autoImport account configuration
 router.post("/autoImportAccount", ctrData.addAutoImportAccountData);
 
+// Add glucose data (mainly for tests)
+router.post("/manyData", ctrData.postManyData);
+
 // Get last 24h data to display on chart
 router.get("/lastXhData", ctrData.getDataByHour);
 

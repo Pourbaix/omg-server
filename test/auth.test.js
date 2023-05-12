@@ -141,21 +141,3 @@ describe("Adding new user with 'signup' route", () => {
 		expect(body.message).to.equal("Password must be 8 or more characters.");
 	});
 });
-
-// describe("Test the 'verify' route to test token", () => {
-// 	it("Test that the verification passes with a valid token", async () => {
-// 		// Connecting correctly to an account
-// 		let { body, status } = await request(server)
-// 			.post("/api/users/signin")
-// 			.send({
-// 				email: "test@test.com",
-// 				password: "test1234",
-// 			});
-// 		let { requestBody, requestStatus } = await request(server).get(
-// 			"/api/users/verify"
-// 		);
-// 		expect(requestStatus).to.equal(200);
-// 		expect(requestBody.status).to.equal("ok");
-// 		expect(requestBody.message).to.equal("valid key");
-// 	});
-// });
