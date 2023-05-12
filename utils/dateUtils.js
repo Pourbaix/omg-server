@@ -36,14 +36,14 @@ function toNormalizedUTCISOStringWithCountry(country, date) {
 	return newIso.toISOString();
 }
 
-function roundTo5Minutes(date) {
-	if (date % 5 == 0) {
-		return date;
+function roundTo5Minutes(numberOfMinutes) {
+	if (numberOfMinutes % 5 == 0) {
+		return numberOfMinutes;
 	}
 	let minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 	let roundedTime = 0;
 	for (let i in minutesList) {
-		if (minutesList[i] < date) {
+		if (minutesList[i] < numberOfMinutes) {
 			roundedTime = minutesList[i];
 		} else {
 			return roundedTime;
