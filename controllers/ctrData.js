@@ -879,7 +879,8 @@ function getFromMiniMedPump(req, res, user, importName) {
 				colGlucose = cols.colGlucose,
 				pumpSN = cols.pumpSN,
 				colCarbInput = cols.colCarbInput,
-				colEstimateUnits = cols.colEstimateUnits;
+				colEstimateUnits = cols.colEstimateUnits,
+				colDeliveringStatus = cols.colDeliveringStatus;
 			// Retrieve date time and glucose rows
 			let i = 0;
 			fileRows.forEach((row) => {
@@ -892,6 +893,7 @@ function getFromMiniMedPump(req, res, user, importName) {
 						pumpSN = cols.pumpSN;
 						colCarbInput = cols.colCarbInput;
 						colEstimateUnits = cols.colEstimateUnits;
+						colDeliveringStatus = cols.colDeliveringStatus;
 					}
 				}
 				// Glucose
@@ -928,7 +930,8 @@ function getFromMiniMedPump(req, res, user, importName) {
 					if (
 						row[colDate].includes("/") &&
 						row[colTime].includes(":") &&
-						row[colCarbInput].length > 0
+						row[colCarbInput].length > 0 &&
+						row[colDeliveringStatus] === "Delivered"
 					) {
 						if (row[colDate].substr(0, 3).includes("/")) {
 							let dateArray = row[colDate].split("/");
@@ -1061,7 +1064,8 @@ function findInFileRows(fileRows, start) {
 		colGlucose = -1,
 		pumpSN = "",
 		colCarbInput = -1,
-		colEstimateUnits = -1;
+		colEstimateUnits = -1,
+		colDeliveringStatus = -1;
 	// Find column numbers and pump serial number
 	for (let row = start; row < fileRows.length; row++) {
 		if (
@@ -1070,7 +1074,8 @@ function findInFileRows(fileRows, start) {
 			colGlucose < 0 ||
 			pumpSN === "" ||
 			colCarbInput < 0 ||
-			colEstimateUnits < 0.0
+			colEstimateUnits < 0.0 ||
+			colDeliveringStatus < 0
 		) {
 			for (let col = 0; col < fileRows[row].length; col++) {
 				if ((typeof fileRows[row][col]).toString() === "string") {
@@ -1107,6 +1112,12 @@ function findInFileRows(fileRows, start) {
 								fileRows[row][col]
 							);
 					}
+					if (colDeliveringStatus < 0) {
+						if (fileRows[row][col] == "BWZ Status")
+							colDeliveringStatus = fileRows[row].indexOf(
+								fileRows[row][col]
+							);
+					}
 				}
 			}
 		} else {
@@ -1120,6 +1131,7 @@ function findInFileRows(fileRows, start) {
 		pumpSN,
 		colCarbInput,
 		colEstimateUnits,
+		colDeliveringStatus,
 	};
 }
 /**
