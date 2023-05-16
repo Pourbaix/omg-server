@@ -1063,6 +1063,8 @@ function formatDatetime(strDate, strTime) {
 	let isoDate = almostFinalDatetime.toISOString();
 	return isoDate;
 }
+
+// Duplicate
 function formatDatetimeWithoutRound(strDate, strTime) {
 	let localDatetime = new Date(
 		strDate.substring(0, 4),
