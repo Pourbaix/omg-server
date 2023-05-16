@@ -754,7 +754,7 @@ exports.getTagsWithoutData = async function (req, res) {
 						message: "Incorrect token",
 					});
 				}
-				// console.log("request done");
+
 				let tagWithNoDataList = [];
 				let dataList = [];
 				let dataResponse = await GlucoseData.findAll({
@@ -776,20 +776,17 @@ exports.getTagsWithoutData = async function (req, res) {
 						element.dataValues.startDatetime.getTime() - 900000;
 					let endDateMs =
 						element.dataValues.startDatetime.getTime() + 900000;
-					// console.log(new Date().setTime(startDateMs).toString());
-					// console.log(new Date().setTime(endDateMs).toString());
+
 					let correspondingData = dataList.filter((data) => {
 						return (
 							startDateMs <= data.datetime.getTime() &&
 							data.datetime.getTime() <= endDateMs
 						);
 					});
-					// console.log(correspondingData);
 					if (!correspondingData.length) {
 						tagWithNoDataList.push(element.dataValues);
 					}
 				});
-				// console.log(tagWithNoDataList);
 				return res.status(200).json(tagWithNoDataList);
 			}
 		)(req, res);

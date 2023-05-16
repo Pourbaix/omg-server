@@ -536,7 +536,7 @@ exports.addAutoImportAccountData = async function (req, res) {
 					lastDataUpdate: undefined,
 				});
 				return res
-					.status(200)
+					.status(201)
 					.json("Request Received and auto import initialized");
 			}
 		)(req, res);
@@ -551,6 +551,18 @@ exports.deleteAutoImportConfiguration = async (req, res) => {
 			"local-jwt",
 			{ session: false },
 			async function (err, user) {
+				if (err) {
+					return res.json({
+						status: "Authentication error",
+						message: err,
+					});
+				}
+				if (!user) {
+					return res.json({
+						status: "error",
+						message: "Incorrect token",
+					});
+				}
 				let response = await AutoImportData.findOne({
 					where: {
 						userId: user.id,
@@ -578,6 +590,18 @@ exports.checkAutoImportConfiguration = async (req, res) => {
 			"local-jwt",
 			{ session: false },
 			async function (err, user) {
+				if (err) {
+					return res.json({
+						status: "Authentication error",
+						message: err,
+					});
+				}
+				if (!user) {
+					return res.json({
+						status: "error",
+						message: "Incorrect token",
+					});
+				}
 				let response = await AutoImportData.findOne({
 					where: {
 						userId: user.id,
@@ -603,6 +627,18 @@ exports.autoImportData = async (req, res) => {
 			"local-jwt",
 			{ session: false },
 			async function (err, user) {
+				if (err) {
+					return res.json({
+						status: "Authentication error",
+						message: err,
+					});
+				}
+				if (!user) {
+					return res.json({
+						status: "error",
+						message: "Incorrect token",
+					});
+				}
 				let response = await AutoImportData.findOne({
 					where: {
 						userId: user.id,
@@ -677,6 +713,7 @@ exports.getRangesWithNoData = async (req, res) => {
 							array[index + 1].datetime
 						).getTime();
 						let diff = next_datetime - current_datetime;
+						// Le 300000 correspond au threshold en ms (donc on prend les données 15mins avant et après)
 						if (diff > 300000) {
 							period_without_data.push({
 								start: element.datetime,
@@ -724,7 +761,7 @@ exports.getDataInRange = async (req, res) => {
 						"startDate has to be older than endDate."
 					);
 				}
-				let insulineResponse = await Insulin.findAll({
+				let insulinResponse = await Insulin.findAll({
 					where: {
 						userId: user.id,
 						datetime: {
@@ -745,7 +782,7 @@ exports.getDataInRange = async (req, res) => {
 				});
 
 				let finalData = {
-					insulin: insulineResponse.map((element) => {
+					insulin: insulinResponse.map((element) => {
 						return element.dataValues;
 					}),
 					glucose: glucoseResponse.map((element) => {
