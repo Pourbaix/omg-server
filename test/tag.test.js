@@ -4,6 +4,8 @@ const server = require("../app.js");
 
 const { expect } = chai;
 
+const Tag = require("../models/modelTag");
+
 describe("Testing tags routes", () => {
 	// Initial connection to recover session token
 	let token;
@@ -21,17 +23,23 @@ describe("Testing tags routes", () => {
 			});
 	});
 
+	afterEach((done) => {
+		Tag.destroy({ truncate: true });
+		done();
+	});
+
 	describe("Test get tag and post 'one' routes", () => {
 		it("Test getting all tags with nothing in db", async () => {
-			let { body, status } = await request(server)
+			let response = await request(server)
 				.get("/api/tags/all")
 				.set({ Authorization: `Bearer ${token}` })
 				.send();
-			expect(body.length).to.equal(0);
-			expect(status).to.equal(200);
+			expect(response.body.length).to.equal(0);
+			expect(response.status).to.equal(200);
 		});
-		it("Test adding tag in the db", async () => {
-			let { body, status } = await request(server)
+
+		it("Test adding tag in the db and checking it exist", async () => {
+			let response = await request(server)
 				.post("/api/tags/one")
 				.set({ Authorization: `Bearer ${token}` })
 				.send({
@@ -39,15 +47,15 @@ describe("Testing tags routes", () => {
 					startDatetime: new Date("2023-02-04T13:22:30.667Z"),
 					endDatetime: new Date("2023-02-04T13:22:30.667Z"),
 				});
-			expect(status).to.equal(200);
-		});
-		it("Test getting all tags with a tag in db", async () => {
-			let { body, status } = await request(server)
+			expect(response.status).to.equal(200);
+			expect(response.body).to.equal("ok");
+
+			response = await request(server)
 				.get("/api/tags/all")
 				.set({ Authorization: `Bearer ${token}` })
 				.send();
-			expect(body.length).to.equal(1);
-			expect(status).to.equal(200);
+			expect(response.body.length).to.equal(1);
+			expect(response.status).to.equal(200);
 		});
 	});
 
@@ -61,8 +69,8 @@ describe("Testing tags routes", () => {
 			expect(status).to.equal(200);
 		});
 
-		it("Testing the post of pending tags", async () => {
-			let { body, status } = await request(server)
+		it("Testing the post of pending tags and get all", async () => {
+			let response = await request(server)
 				.post("/api/tags/pending")
 				.set({ Authorization: `Bearer ${token}` })
 				.send({
@@ -77,21 +85,38 @@ describe("Testing tags routes", () => {
 						},
 					],
 				});
-			expect(status).to.equal(200);
-			expect(body).to.equal("redirect");
-		});
+			expect(response.status).to.equal(200);
+			expect(response.body).to.equal("redirect");
 
-		it("Testing get all pending tags with 2 pending tags in db", async () => {
-			let { body, status } = await request(server)
+			// Retrieveing all pending tags
+			response = await request(server)
 				.get("/api/tags/pending")
 				.set({ Authorization: `Bearer ${token}` })
 				.send();
-			expect(body.length).to.equal(2);
-			expect(status).to.equal(200);
+			expect(response.body.length).to.equal(2);
+			expect(response.status).to.equal(200);
 		});
 
 		it("Testing adding an already existing tag give a 'alreadyexist' message", async () => {
-			let { body, status } = await request(server)
+			let response = await request(server)
+				.post("/api/tags/pending")
+				.set({ Authorization: `Bearer ${token}` })
+				.send({
+					pendingTags: [
+						{
+							pendingName: "TestPendingTag1",
+							pendingDatetime: "2023-02-04T10:00:00.000Z",
+						},
+						{
+							pendingName: "TestPendingTag2",
+							pendingDatetime: "2023-02-04T11:00:00.000Z",
+						},
+					],
+				});
+			expect(response.status).to.equal(200);
+			expect(response.body).to.equal("redirect");
+
+			response = await request(server)
 				.post("/api/tags/pending")
 				.set({ Authorization: `Bearer ${token}` })
 				.send({
@@ -102,33 +127,58 @@ describe("Testing tags routes", () => {
 						},
 					],
 				});
-			expect(status).to.equal(200);
-			expect(body).to.equal("alreadyexists");
+			expect(response.status).to.equal(200);
+			expect(response.body).to.equal("alreadyexists");
 		});
 	});
 
 	describe("Testing get tags with no data", () => {
-		it("Making sure we have no glucose data in the DB", async () => {
-			let { body, status } = await request(server)
+		it("Testing that getting tags with no data returns all created tags", async () => {
+			// Clearing glucose data
+			let response = await request(server)
 				.delete("/api/data/all")
 				.set({ Authorization: `Bearer ${token}` })
 				.send();
-			expect(body).to.equal("All data deleted.");
-			expect(status).to.equal(200);
-		});
+			expect(response.body).to.equal("All data deleted.");
+			expect(response.status).to.equal(200);
 
-		it("Testing that getting tags with no data returns all the previously created tags", async () => {
-			let { body, status } = await request(server)
+			// Adding a tag
+			response = await request(server)
+				.post("/api/tags/one")
+				.set({ Authorization: `Bearer ${token}` })
+				.send({
+					tag: "TestTag",
+					startDatetime: new Date("2023-02-04T13:22:30.667Z"),
+					endDatetime: new Date("2023-02-04T13:22:30.667Z"),
+				});
+			expect(response.status).to.equal(200);
+			expect(response.body).to.equal("ok");
+
+			// Checking that it returns the tag
+			response = await request(server)
 				.get("/api/tags/withNoData")
 				.set({ Authorization: `Bearer ${token}` })
 				.send();
-			expect(status).to.equal(200);
-			expect(body.length).to.equal(1);
-			expect(body[0].name).to.equal("TestTag");
+			expect(response.status).to.equal(200);
+			expect(response.body.length).to.equal(1);
+			expect(response.body[0].name).to.equal("TestTag");
 		});
 
-		it("Adding one data to the corresponding 'missing data' tag", async () => {
-			let { body, status } = await request(server)
+		it("Adding one data to a corresponding 'missing data' tag", async () => {
+			// Adding a tag
+			let response = await request(server)
+				.post("/api/tags/one")
+				.set({ Authorization: `Bearer ${token}` })
+				.send({
+					tag: "TestTag",
+					startDatetime: new Date("2023-02-04T13:22:30.667Z"),
+					endDatetime: new Date("2023-02-04T13:22:30.667Z"),
+				});
+			expect(response.status).to.equal(200);
+			expect(response.body).to.equal("ok");
+
+			// Adding glucose data
+			response = await request(server)
 				.post("/api/data/manyData")
 				.set({ Authorization: `Bearer ${token}` })
 				.send({
@@ -140,18 +190,16 @@ describe("Testing tags routes", () => {
 						},
 					],
 				});
-			expect(body).to.equal("Data created");
-			expect(status).to.equal(200);
-		});
+			expect(response.body).to.equal("Data created");
+			expect(response.status).to.equal(200);
 
-		it("Testing that getting tags with no data returns nothing", async () => {
 			// Should not return something since the tag has now a corresponding value
-			let { body, status } = await request(server)
+			response = await request(server)
 				.get("/api/tags/withNoData")
 				.set({ Authorization: `Bearer ${token}` })
 				.send();
-			expect(status).to.equal(200);
-			expect(body.length).to.equal(0);
+			expect(response.status).to.equal(200);
+			expect(response.body.length).to.equal(0);
 		});
 	});
 });

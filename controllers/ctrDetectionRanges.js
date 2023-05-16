@@ -18,17 +18,27 @@ const { Op } = require("sequelize");
  * @param req
  * @param res
  */
-exports.postOne = function (req, res) {
+exports.postOne = async function (req, res) {
 	try {
 		passport.authenticate(
 			"local-jwt",
 			{ session: false },
-			function (err, user) {
+			async function (err, user) {
 				if (err) {
 					return res.status(500).json("Authentication error");
 				}
 				if (!user) {
 					return res.status(401).json("Incorrect token");
+				}
+				let alreadyExistCheck = await DetectionRanges.findAll({
+					where: {
+						name: req.body.name,
+					},
+				});
+				if (alreadyExistCheck.length) {
+					return res
+						.status(500)
+						.json("This range name is already taken.");
 				}
 				DetectionRanges.create({
 					name: req.body.name,
@@ -107,13 +117,28 @@ exports.deleteOneRange = async function (req, res) {
 				if (!req.body.rangeId) {
 					return res.status(401).json("Missing rangeId");
 				}
-				let response = await DetectionRanges.destroy({
+				let findIfExist = await DetectionRanges.findAll({
 					where: {
-						userId: user.id,
 						id: req.body.rangeId,
 					},
 				});
-				res.status(200).json("Range " + req.body.rangeId + " deleted.");
+				if (findIfExist.length) {
+					await DetectionRanges.destroy({
+						where: {
+							userId: user.id,
+							id: req.body.rangeId,
+						},
+					});
+					res.status(200).json(
+						"Range " + req.body.rangeId + " deleted."
+					);
+				} else {
+					return res
+						.status(500)
+						.json(
+							"The given id is not corresponding to any range!"
+						);
+				}
 			}
 		)(req, res);
 	} catch (e) {

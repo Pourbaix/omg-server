@@ -11,13 +11,13 @@ router.put("/one", ctrDetectionRanges.putOne);
 // Delete one range
 router.delete("/one", ctrDetectionRanges.deleteOneRange);
 
-// Retrive all detection ranges
+// Retreives all detection ranges
 router.get("/all", ctrDetectionRanges.getAll);
 
-// Recover all ranges with formated days number
+// Recovers all ranges with formated days number
 router.get("/times", ctrDetectionRanges.RangesWithFormattedTimes);
 
-// Recover the number of detection ranges
+// Recovers the number of detection ranges
 router.get("/countAll", ctrDetectionRanges.getCountAll);
 
 // NOT IMPLEMENTED

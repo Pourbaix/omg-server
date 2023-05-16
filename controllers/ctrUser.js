@@ -90,7 +90,7 @@ exports.postSignin = async function (req, res) {
 					const token = jwt.sign(user.dataValues, "jwt1234", {
 						expiresIn: "2h",
 					});
-					console.log(user.dataValues.id);
+					// console.log(user.dataValues.id);
 					return res.json({
 						status: "ok",
 						message: "connected",

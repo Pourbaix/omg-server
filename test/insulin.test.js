@@ -20,7 +20,7 @@ describe("Testing insulin data routes", () => {
 			});
 	});
 
-	describe("Testing file import", () => {
+	describe("", () => {
 		it("", async () => {});
 	});
 });
