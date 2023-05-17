@@ -826,7 +826,8 @@ async function insertIfNoDup(dataObj, importName, user) {
 		await GlucoseData.findOne({
 			logging: false,
 			where: {
-				[Op.and]: [{ datetime: dbFormatDatetime }, { userId: user.id }],
+				datetime: dbFormatDatetime,
+				userId: user.id,
 			},
 		}).then((res) => {
 			if (res) {
@@ -858,24 +859,28 @@ async function insertIfNoDup(dataObj, importName, user) {
 		await Insulin.findOne({
 			logging: false,
 			where: {
-				[Op.and]: [
-					{ datetime: dbFormatDatetime },
-					{ userId: user.id },
-					{ insulinType: "MEAL" },
-					// { insulinDescr: description },
-				],
+				datetime: dbFormatDatetime,
+				userId: user.id,
+				insulinType: "MEAL",
+				// { insulinDescr: description },
 			},
 		}).then((res) => {
 			if (res) {
 				seeDup++;
 			} else {
-				Insulin.create({
-					datetime: dbFormatDatetime,
-					carbInput: parseInt(dataObj.carbInput[z]),
-					userId: user.id,
-					insulinType: "MEAL",
-					insulinDescr: description,
-				}).then(seeInsert++);
+				console.log(dbFormatDatetime);
+				console.log(res);
+				try {
+					Insulin.create({
+						datetime: dbFormatDatetime,
+						carbInput: parseInt(dataObj.carbInput[z]),
+						userId: user.id,
+						insulinType: "MEAL",
+						insulinDescr: description,
+					}).then(seeInsert++);
+				} catch (e) {
+					console.log(e);
+				}
 			}
 		});
 	}
@@ -982,7 +987,7 @@ function getFromMiniMedPump(req, res, user, importName) {
 						dataObj.carbTime.push(row[colTime]);
 						dataObj.carbInput.push(row[colCarbInput]);
 						dataObj.estimateUnits.push(
-							parseFloat(row[colEstimateUnits])
+							parseFloat(row[colEstimateUnits].replace(/,/g, "."))
 						);
 					}
 				}

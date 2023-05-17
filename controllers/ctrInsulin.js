@@ -48,16 +48,19 @@ exports.getBolusWithFormattedDateAndTime = function (req, res) {
 						],
 					],
 					where: {
-						[Op.and]: [
-							{ userId: user.id },
-							// {[Op.between]: [res.dataValues.fromTime, res.dataValues.toTime]},
-						],
+						userId: user.id,
+						insulinType: "MEAL",
+						// {[Op.between]: [res.dataValues.fromTime, res.dataValues.toTime]},
 					},
 					limit: 10000,
 					order: sequelize.literal("updatedAt DESC"),
 				}).then((events) => {
 					let bolusEvents = [];
 					events.forEach((event) => {
+						// ATTENTION => CES DATE ET TIME SONT EN UTC 0
+						// => Trouver un moyen de remettre à l'heure locale en front sinon
+						// on va avoir un décalage sur les données si c'est le front qui
+						// fait le process de détection
 						let date = event.dataValues.extractedDate;
 						let time = event.dataValues.extractedTime;
 						bolusEvents.push({ date: date, time: time });
