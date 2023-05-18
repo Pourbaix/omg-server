@@ -147,7 +147,12 @@ describe("Testing glucose data routes", () => {
 				.field("sensorModel", "minimed")
 				.field("importName", "TestImport")
 				.attach("file", "./test/static/testCSV.csv");
-			let expectedResponse = { status: "ok", seeDup: 0, seeInsert: 10 };
+			let expectedResponse = {
+				status: "ok",
+				seeDup: 0,
+				seeInsert: 10,
+				firstDataDatetime: "2023-05-15T06:00:00.000Z",
+			};
 			expect(response.body).to.deep.equal(expectedResponse);
 			expect(response.status).to.equal(200);
 			//Checking that glucose data and insulin have been inserted to db
@@ -168,7 +173,12 @@ describe("Testing glucose data routes", () => {
 				.field("sensorModel", "minimed")
 				.field("importName", "TestImport")
 				.attach("file", "./test/static/testCSV.csv");
-			let expectedResponse = { status: "ok", seeDup: 0, seeInsert: 10 };
+			let expectedResponse = {
+				status: "ok",
+				seeDup: 0,
+				seeInsert: 10,
+				firstDataDatetime: "2023-05-15T06:00:00.000Z",
+			};
 			expect(response.body).to.deep.equal(expectedResponse);
 			expect(response.status).to.equal(200);
 			response = await request(server)
@@ -177,7 +187,12 @@ describe("Testing glucose data routes", () => {
 				.field("sensorModel", "minimed")
 				.field("importName", "TestImport")
 				.attach("file", "./test/static/testCSV.csv");
-			expectedResponse = { status: "ok", seeDup: 10, seeInsert: 0 };
+			expectedResponse = {
+				status: "ok",
+				seeDup: 10,
+				seeInsert: 0,
+				firstDataDatetime: "2023-05-15T06:00:00.000Z",
+			};
 			expect(response.body).to.deep.equal(expectedResponse);
 			expect(response.status).to.equal(200);
 		});
@@ -189,7 +204,12 @@ describe("Testing glucose data routes", () => {
 				.field("sensorModel", "minimed")
 				.field("importName", "TestImport")
 				.attach("file", "./test/static/testCSV.csv");
-			let expectedResponse = { status: "ok", seeDup: 0, seeInsert: 10 };
+			let expectedResponse = {
+				status: "ok",
+				seeDup: 0,
+				seeInsert: 10,
+				firstDataDatetime: "2023-05-15T06:00:00.000Z",
+			};
 			expect(response.body).to.deep.equal(expectedResponse);
 			expect(response.status).to.equal(200);
 			response = await request(server)
@@ -217,7 +237,7 @@ describe("Testing glucose data routes", () => {
 			expect(response.body).to.equal(
 				"Request Received and auto import initialized"
 			);
-			expect(response.status).to.equal(200);
+			expect(response.status).to.equal(201);
 			expect(mock.callCount).to.equal(1);
 		});
 
@@ -237,7 +257,7 @@ describe("Testing glucose data routes", () => {
 			expect(response.body).to.equal(
 				"Request Received and auto import initialized"
 			);
-			expect(response.status).to.equal(200);
+			expect(response.status).to.equal(201);
 			expect(mock.callCount).to.equal(1);
 
 			response = await request(server)
@@ -289,7 +309,7 @@ describe("Testing glucose data routes", () => {
 			expect(response.body).to.equal(
 				"Request Received and auto import initialized"
 			);
-			expect(response.status).to.equal(200);
+			expect(response.status).to.equal(201);
 			expect(mock.callCount).to.equal(1);
 
 			response = await request(server)
@@ -315,7 +335,7 @@ describe("Testing glucose data routes", () => {
 			expect(response.body).to.equal(
 				"Request Received and auto import initialized"
 			);
-			expect(response.status).to.equal(200);
+			expect(response.status).to.equal(201);
 			expect(mock.callCount).to.equal(1);
 
 			response = await request(server)
@@ -349,7 +369,12 @@ describe("Testing glucose data routes", () => {
 				.field("sensorModel", "minimed")
 				.field("importName", "TestImport")
 				.attach("file", "./test/static/testCSV.csv");
-			let expectedResponse = { status: "ok", seeDup: 0, seeInsert: 10 };
+			let expectedResponse = {
+				status: "ok",
+				seeDup: 0,
+				seeInsert: 10,
+				firstDataDatetime: "2023-05-15T06:00:00.000Z",
+			};
 			expect(response.body).to.deep.equal(expectedResponse);
 			expect(response.status).to.equal(200);
 
