@@ -28,6 +28,11 @@ exports.getBolusWithFormattedDateAndTime = function (req, res) {
 					});
 				}
 
+				let currentDate = new Date(req.query.firstData);
+				let targetDate = new Date();
+				// On prend les données des 3 derniers mois (+ 1 jours) donc 3 mois et un jour
+				targetDate.setTime(currentDate.getTime() - 7862400000);
+
 				Insulin.findAll({
 					attributes: [
 						[
@@ -50,11 +55,17 @@ exports.getBolusWithFormattedDateAndTime = function (req, res) {
 					where: {
 						userId: user.id,
 						insulinType: "MEAL",
-						// {[Op.between]: [res.dataValues.fromTime, res.dataValues.toTime]},
+						datetime: {
+							[Op.between]: [
+								targetDate.toISOString(),
+								currentDate.toISOString(),
+							],
+						},
 					},
 					limit: 10000,
 					order: sequelize.literal("updatedAt DESC"),
 				}).then((events) => {
+					console.log("OK QUERY");
 					let bolusEvents = [];
 					events.forEach((event) => {
 						// ATTENTION => CES DATE ET TIME SONT EN UTC 0

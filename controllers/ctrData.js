@@ -820,6 +820,7 @@ async function getDatetimesDB(user) {
 async function insertIfNoDup(dataObj, importName, user) {
 	let seeDup = 0;
 	let seeInsert = 0;
+	let mostRecentInsulinDatetime = "";
 	// Glucose
 	for (let i = 0; i < dataObj.date.length; i++) {
 		let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
@@ -849,6 +850,13 @@ async function insertIfNoDup(dataObj, importName, user) {
 			dataObj.carbDate[z],
 			dataObj.carbTime[z]
 		);
+		if (mostRecentInsulinDatetime) {
+			dbFormatDatetime > mostRecentInsulinDatetime
+				? (mostRecentInsulinDatetime = dbFormatDatetime)
+				: "";
+		} else {
+			mostRecentInsulinDatetime = dbFormatDatetime;
+		}
 		let description = JSON.stringify({
 			activationType: "RECOMMENDED",
 			programmedFastAmount: dataObj.estimateUnits[z],
@@ -884,7 +892,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 			}
 		});
 	}
-	return [seeDup, seeInsert];
+	return [seeDup, seeInsert, mostRecentInsulinDatetime];
 }
 /**
  *  Minimed import method
@@ -999,6 +1007,7 @@ function getFromMiniMedPump(req, res, user, importName) {
 						status: "ok",
 						seeDup: see[0],
 						seeInsert: see[1],
+						firstDataDatetime: see[2],
 					});
 				});
 			} catch (e) {
