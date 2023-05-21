@@ -8,52 +8,52 @@ describe("Testing user routes", () => {
 	describe("Test connection with 'signin' POST route", async () => {
 		it("Test connection to server fails with bad password and mail", async () => {
 			// Connection with a non-existing user
-			const { body, status } = await request(server)
+			const response = await request(server)
 				.post("/api/users/signin")
 				.send({
 					email: "notexist@notexist.com",
 					password: "notexist",
 				});
-			expect(status).to.equal(200);
-			expect(body.status).to.equal("error");
-			expect(body.token).to.be.undefined;
+			expect(response.status).to.equal(200);
+			expect(response.body.status).to.equal("error");
+			expect(response.body.token).to.be.undefined;
 		});
 		it("Test connection to server fails with good mail but bad password", async () => {
 			// Connection with an existing user with bad password
-			const { body, status } = await request(server)
+			const response = await request(server)
 				.post("/api/users/signin")
 				.send({
 					email: "test@test.com",
 					password: "notexist",
 				});
-			expect(status).to.equal(200);
-			expect(body.status).to.equal("error");
-			expect(body.token).to.be.undefined;
+			expect(response.status).to.equal(200);
+			expect(response.body.status).to.equal("error");
+			expect(response.body.token).to.be.undefined;
 		});
 		it("Test connection to server fails with bad mail but good password", async () => {
 			// Connection with a non-existing user
-			const { body, status } = await request(server)
+			const response = await request(server)
 				.post("/api/users/signin")
 				.send({
 					email: "notexist@notexist.com",
 					password: "test1234",
 				});
-			expect(status).to.equal(200);
-			expect(body.status).to.equal("error");
-			expect(body.token).to.be.undefined;
+			expect(response.status).to.equal(200);
+			expect(response.body.status).to.equal("error");
+			expect(response.body.token).to.be.undefined;
 		});
 		it("Test connection to server succes with good credentials", async () => {
 			// Connection with an existing user
-			const { body, status } = await request(server)
+			const response = await request(server)
 				.post("/api/users/signin")
 				.send({
 					email: "test@test.com",
 					password: "test1234",
 				});
-			expect(status).to.equal(200);
-			expect(body.status).to.equal("ok");
-			expect(body.message).to.equal("connected");
-			expect(body.token).to.not.be.undefined;
+			expect(response.status).to.equal(200);
+			expect(response.body.status).to.equal("ok");
+			expect(response.body.message).to.equal("connected");
+			expect(response.body.token).to.not.be.undefined;
 		});
 	});
 

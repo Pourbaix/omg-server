@@ -3,6 +3,8 @@ require("dotenv").config();
 const GlocuseData = require("../models/modelGlucoseData");
 const Insulin = require("../models/modelInsulin");
 const AutoImportData = require("../models/modelAutoImportData");
+const DetectionRanges = require("../models/modelDetectionRanges");
+const Tags = require("../models/modelTag");
 const careLinkImport = require("./careLinkImport.js");
 const dateUtils = require("./dateUtils.js");
 
@@ -30,10 +32,6 @@ async function autoImport(userId) {
 		userInfo.dataValues.country
 	);
 
-	// let lastDataImportedFormated = dateUtils.normalizedUTC(
-	// 	new Date(userInfo.lastDataUpdate).getTime()
-	// );
-	// // console.log(lastDataImportedFormated);
 	let glucoseData = data["sgs"];
 	let insulinData = data["markers"];
 	let insulinFilter = ["INSULIN", "AUTO_BASAL_DELIVERY", "MEAL"];
@@ -43,6 +41,7 @@ async function autoImport(userId) {
 
 	// Ici on récupère les info des 24 dernières heures dans un objet js pour pouvoir faire des comparaisons d'existance après
 	let lastInsulinData = await getLast24HData(0, userId);
+	// Insulin
 	for (let e in insulinData) {
 		if (insulinData[e].dateTime) {
 			// Check if data already exists
@@ -63,6 +62,7 @@ async function autoImport(userId) {
 				);
 			});
 			if (!existCheck.length) {
+				// Insert insulin data in database
 				let additionnalData = {};
 				if (
 					insulinData[e]["type"] == insulinFilter[0] &&
@@ -147,7 +147,9 @@ async function autoImport(userId) {
 			}
 		}
 	}
+	// On récup les données déjà existantes pour éviter les duplicas
 	let lastGlucoseData = await getLast24HData(1, userId);
+	// Glucose
 	for (let i in glucoseData) {
 		if (glucoseData[i].datetime && parseInt(glucoseData[i].sg) != 0) {
 			let existCheck = lastGlucoseData.filter((x) => {
@@ -162,6 +164,7 @@ async function autoImport(userId) {
 				);
 			});
 			if (!existCheck.length) {
+				// insert glucose in data base
 				GlocuseData.create({
 					datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
 						userInfo.dataValues.country,
@@ -193,9 +196,8 @@ async function autoImport(userId) {
 			return 1;
 		});
 
-	/////////////CLOSE SEQ CONNECTION////////////////////
-	// await seq.sequelize.close();
-	/////////////////////////////////////////////////////
+	// NOW RUN TAG DETECTION JOB ON LAST 24H MEAL BOLUS DATA
+	await runTagDetection(userId);
 }
 async function autoImportAllUsers() {
 	let userList = await AutoImportData.findAll({ attributes: ["userId"] });
@@ -268,6 +270,144 @@ function buildAdditionnalData(insulinData) {
 		});
 	}
 	return null;
+}
+
+async function runTagDetection(userId) {
+	let currentDate = new Date();
+	let targetDate = new Date();
+	// On prend que les données sur les dernière 24h (donc les données qui viennent de l'import auto effectué)
+	targetDate.setTime(currentDate.getTime() - 25 * 3600000);
+
+	// On vient récup les bolus et les ranges
+	let bolusData = await Insulin.findAll({
+		where: {
+			userId: userId,
+			insulinType: "MEAL",
+			datetime: {
+				[Op.between]: [
+					targetDate.toISOString(),
+					currentDate.toISOString(),
+				],
+			},
+		},
+	});
+
+	let detectionRanges = await DetectionRanges.findAll({
+		where: { userId: userId },
+	});
+
+	rangesValues = detectionRanges.map((element) => {
+		return element.dataValues;
+	});
+	bolusDataValues = bolusData.map((element) => {
+		return element.dataValues;
+	});
+
+	// Pour chaque range configurée
+	rangesValues.forEach((range) => {
+		let days = convertNumberToDays(range.daysSelected);
+		// On ne prend que les bolus qui sont dans la range de time
+		let bolusInTimeRange = bolusDataValues.filter((bolus) => {
+			let hours = new Date(bolus.datetime)
+				.toISOString()
+				.substring(11, 16);
+			return hours >= range.fromTime && hours <= range.toTime;
+		});
+
+		// Puis uniquement ceux qui sont dans le(s) bon(s) jour(s)
+		let bolusInDayRange = bolusInTimeRange.filter((bolus) => {
+			// On récupère le jour du bolus en question
+			let bolusDay = new Date(bolus.datetime).getUTCDay();
+			// Si la liste des jours de la range contient le jour de notre bolus c'est OK
+			return days.includes(bolusDay);
+		});
+
+		// On groupe les bolus par jours pour ensuite prendre celui qui apparait le plus tôt dans la journée
+		let groupedBolusByDay = groupByDate(bolusInDayRange);
+
+		let finalBolusList = [];
+		Object.keys(groupedBolusByDay).forEach((element) => {
+			finalBolusList.push(
+				groupedBolusByDay[element].sort((a, b) => {
+					return new Date(a.datetime) > new Date(b.datetime)
+						? 1
+						: new Date(a.datetime) < new Date(b.datetime)
+						? -1
+						: 0;
+				})[0]
+			);
+		});
+
+		// console.log(days);
+		// console.log(bolusInTimeRange);
+		// console.log(bolusInDayRange);
+		// console.log(groupedBolusByDay);
+		// console.log(finalBolusList);
+
+		// Inserting tags
+		finalBolusList.forEach(async (bolus) => {
+			// Checking if already exist before inserting
+			let res = await Tags.findOne({
+				where: {
+					userId: userId,
+					name: range.name,
+					startDatetime: bolus.datetime,
+					wasAuto: true,
+				},
+			});
+			if (res) {
+				console.log(res);
+			} else {
+				await Tags.create({
+					userId: userId,
+					name: range.name,
+					startDatetime: bolus.datetime,
+					endDatetime: bolus.datetime,
+					isPending: true,
+					wasAuto: true,
+				});
+			}
+		});
+	});
+	return 1;
+}
+
+// This function is used to create an array of numbers corresponding to the days selected in the detection range
+function convertNumberToDays(daysNumber) {
+	let temp = daysNumber;
+	// dayArray contains binary number
+	let dayArray = [];
+	// finalDayArray contains numbers of active days
+	let finalDayArray = [];
+	while (temp !== 0) {
+		dayArray.push(temp % 2);
+		temp = Math.floor(temp / 2);
+	}
+	while (dayArray.length < 7) {
+		dayArray.push(0);
+	}
+	dayArray.forEach((day, index) => {
+		if (day) {
+			finalDayArray.push(index);
+		}
+	});
+	return finalDayArray;
+}
+
+// Create an object with all the different dates and their corresponding bolus
+function groupByDate(array) {
+	let groups = {};
+	array.forEach((element) => {
+		let elementDate = new Date(element.datetime)
+			.toISOString()
+			.substring(0, 10);
+		if (Object.keys(groups).includes(elementDate)) {
+			groups[elementDate].push(element);
+		} else {
+			groups[elementDate] = [element];
+		}
+	});
+	return groups;
 }
 
 module.exports = {
