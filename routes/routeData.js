@@ -1,28 +1,55 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const ctrData = require("../controllers/ctrData");
-const multer = require('multer');
-const upload = multer({dest: 'tmp/csv/'});
+const multer = require("multer");
+const upload = multer({ dest: "tmp/csv/" });
 
 // Import CSV data file
-router.post('/file', upload.single('file'), ctrData.postFile);
+router.post("/file", upload.single("file"), ctrData.postFile);
+
+// Add autoImport account configuration
+router.post("/autoImportAccount", ctrData.addAutoImportAccountData);
+
+// Add glucose data (mainly for tests)
+router.post("/manyData", ctrData.postManyData);
+
+// Get last 24h data to display on chart
+router.get("/lastXhData", ctrData.getDataByHour);
+
+// Import the data from the carelink server
+router.get("/autoImportData", ctrData.autoImportData);
+
+// Check if user configured autoImport
+router.get("/autoImportConfiguration", ctrData.checkAutoImportConfiguration);
 
 // Retrieve data for chart display
-router.get('/chart', ctrData.chart);
+router.get("/chart", ctrData.chart);
 
 // Retrieve an array of the days from data
-router.get('/days', ctrData.getDataDays);
+router.get("/days", ctrData.getDataDays);
 
 // Retrieve an array of the datetime from data
-router.get('/datetime', ctrData.getDataDatetime);
+router.get("/datetime", ctrData.getDataDatetime);
 
 // Retrieve an array of import names
-router.get('/importnames', ctrData.getImportNames);
+router.get("/importnames", ctrData.getImportNames);
+
+// Get all the missing datas
+router.get("/rangesWithNoData", ctrData.getRangesWithNoData);
+
+// Get datas in a given range
+router.get("/getDataInRange", ctrData.getDataInRange);
 
 // Delete data of an import
-router.delete('/file', ctrData.deleteFile);
+router.delete("/file", ctrData.deleteFile);
 
 // Delete all data of a user
-router.delete('/all', ctrData.deleteAll);
+router.delete("/all", ctrData.deleteAll);
+
+// Delete an auto-import configuration for a given user
+router.delete(
+	"/deleteAutoImportConfiguration",
+	ctrData.deleteAutoImportConfiguration
+);
 
 module.exports = router;

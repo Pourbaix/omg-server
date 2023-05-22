@@ -1,0 +1,21 @@
+﻿Last Name;First Name;Patient ID;System ID;Start Date;End Date;Device;MiniMed 780G MMT-1886;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Test Last Name;Test First Name;;;02-03-23 00:00;15-03-23 00:00;Serial Number;NG2407151H;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Device data shown may exceed selected date range.;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+-------;MiniMed 780G MMT-1886;Pump;NG2407151H;------- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Index;Date;Time;New Device Time;BG Source;BG Reading (mg/dL);Linked BG Meter ID;Basal Rate (U/h);Temp Basal Amount;Temp Basal Type;Temp Basal Duration (h:mm:ss);Bolus Type;Bolus Volume Selected (U);Bolus Volume Delivered (U);Bolus Duration (h:mm:ss);Prime Type;Prime Volume Delivered (U);Alarm;Suspend;Rewind;BWZ Estimate (U);BWZ Target High BG (mg/dL);BWZ Target Low BG (mg/dL);BWZ Carb Ratio (g/U);BWZ Insulin Sensitivity (mg/dL/U);BWZ Carb Input (grams);BWZ BG/SG Input (mg/dL);BWZ Correction Estimate (U);BWZ Food Estimate (U);BWZ Active Insulin (U);BWZ Status;Sensor Calibration BG (mg/dL);Sensor Glucose (mg/dL);ISIG Value;Event Marker;Bolus Number;Bolus Cancellation Reason;BWZ Unabsorbed Insulin Total (U);Final Bolus Estimate;Scroll Step Size;Insulin Action Curve Time;Sensor Calibration Rejected Reason;Preset Bolus;Bolus Source;BLE Network Device;Device Update Event;Network Device Associated Reason;Network Device Disassociated Reason;Network Device Disconnected Reason;Sensor Exception;Preset Temp Basal Name
+0;2023/03/15;08:13:24;;;;;;;;;Normal;0,05;0,05;;;;;;;2;;;;;100;;;;;Delivered;;;;;87;;;;;;;;;;;;;;;
+1;2023/03/15;08:07:23;;;;;;;;;Normal;0,05;0,05;;;;;;;2.15;;;;;120;;;;;Delivered;;;;;86;;;;;;;;;;;;;;;
+2;2023/05/15;08:00:23;;;;;;;;;Normal;2,175;2,175;;;;;1.25;;;;;;;90;;;;;Delivered;;;;;85;;;;;;;;;;;;;;;
+2;2023/05/15;08:00:23;;;;;;;;;Normal;2,175;2,175;;;;;1.25;;;;;;;90;;;;;Not Delivered;;;;;85;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+-------;MiniMed 780G MMT-1886;Sensor;NG2407151H;------- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Index;Date;Time;New Device Time;BG Source;BG Reading (mg/dL);Linked BG Meter ID;Basal Rate (U/h);Temp Basal Amount;Temp Basal Type;Temp Basal Duration (h:mm:ss);Bolus Type;Bolus Volume Selected (U);Bolus Volume Delivered (U);Bolus Duration (h:mm:ss);Prime Type;Prime Volume Delivered (U);Alarm;Suspend;Rewind;BWZ Estimate (U);BWZ Target High BG (mg/dL);BWZ Target Low BG (mg/dL);BWZ Carb Ratio (g/U);BWZ Insulin Sensitivity (mg/dL/U);BWZ Carb Input (grams);BWZ BG/SG Input (mg/dL);BWZ Correction Estimate (U);BWZ Food Estimate (U);BWZ Active Insulin (U);BWZ Status;Sensor Calibration BG (mg/dL);Sensor Glucose (mg/dL);ISIG Value;Event Marker;Bolus Number;Bolus Cancellation Reason;BWZ Unabsorbed Insulin Total (U);Final Bolus Estimate;Scroll Step Size;Insulin Action Curve Time;Sensor Calibration Rejected Reason;Preset Bolus;Bolus Source;BLE Network Device;Device Update Event;Network Device Associated Reason;Network Device Disassociated Reason;Network Device Disconnected Reason;Sensor Exception;Preset Temp Basal Name
+3;2023/03/15;08:26:16;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;146;27,52;;;;;;;;;;;;;;;;;
+4;2023/03/15;08:21:16;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;150;27,7;;;;;;;;;;;;;;;;;
+5;2023/03/15;08:16:16;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;146;26,76;;;;;;;;;;;;;;;;;
+6;2023/03/15;08:11:16;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;134;24,98;;;;;;;;;;;;;;;;;
+7;2023/03/15;08:06:16;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;121;23,24;;;;;;;;;;;;;;;;;
+8;2023/03/15;08:01:16;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;112;21,98;;;;;;;;;;;;;;;;;
+8;2023/03/15;07:30:16;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;112;21,98;;;;;;;;;;;;;;;;;
