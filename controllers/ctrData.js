@@ -47,8 +47,15 @@ exports.getDataByHour = async function (req, res) {
 				datas = { GlucoseData: [], InsulinData: [] };
 				let actualDate = dateUtils.normalizedUTC(new Date().getTime());
 				let hours = parseInt(req.query.hours);
-				let numberOfHoursToSubstract = hours * 3600000;
-				let targetDate = actualDate - numberOfHoursToSubstract;
+				let offset = parseInt(req.query.offset);
+				if (offset < 0) {
+					offset = 0;
+				}
+				// console.log(offset, hours, req.query.offset);
+				let numberOfHoursToSubstract = (offset + hours) * 3600000;
+				let startTargetDate = actualDate - numberOfHoursToSubstract;
+				let endTargetDate = actualDate - offset * 3600000;
+
 				// Récupère les données de glycémie
 				let response = await GlucoseData.findAll({
 					where: {
@@ -63,7 +70,10 @@ exports.getDataByHour = async function (req, res) {
 						return (
 							dateUtils.normalizedUTC(
 								new Date(x.datetime).getTime()
-							) > targetDate
+							) > startTargetDate &&
+							dateUtils.normalizedUTC(
+								new Date(x.datetime).getTime()
+							) < endTargetDate
 						);
 					});
 				// Récupère les données d'insuline
@@ -78,7 +88,10 @@ exports.getDataByHour = async function (req, res) {
 					return (
 						dateUtils.normalizedUTC(
 							new Date(x.datetime).getTime()
-						) > targetDate
+						) > startTargetDate &&
+						dateUtils.normalizedUTC(
+							new Date(x.datetime).getTime()
+						) < endTargetDate
 					);
 				});
 
