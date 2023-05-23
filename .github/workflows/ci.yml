@@ -6,6 +6,9 @@ on:
     pull_request:
         branches: [ci]
 
+env:
+    CI: true
+
 jobs:
     run-backend-tests:
         runs-on: ubuntu-latest
