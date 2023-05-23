@@ -303,72 +303,69 @@ async function runTagDetection(userId) {
 		return element.dataValues;
 	});
 
-	// Pour chaque range configurée
-	rangesValues.forEach((range) => {
-		let days = convertNumberToDays(range.daysSelected);
-		// On ne prend que les bolus qui sont dans la range de time
-		let bolusInTimeRange = bolusDataValues.filter((bolus) => {
-			let hours = new Date(bolus.datetime)
-				.toISOString()
-				.substring(11, 16);
-			return hours >= range.fromTime && hours <= range.toTime;
-		});
-
-		// Puis uniquement ceux qui sont dans le(s) bon(s) jour(s)
-		let bolusInDayRange = bolusInTimeRange.filter((bolus) => {
-			// On récupère le jour du bolus en question
-			let bolusDay = new Date(bolus.datetime).getUTCDay();
-			// Si la liste des jours de la range contient le jour de notre bolus c'est OK
-			return days.includes(bolusDay);
-		});
-
-		// On groupe les bolus par jours pour ensuite prendre celui qui apparait le plus tôt dans la journée
-		let groupedBolusByDay = groupByDate(bolusInDayRange);
-
-		let finalBolusList = [];
-		Object.keys(groupedBolusByDay).forEach((element) => {
-			finalBolusList.push(
-				groupedBolusByDay[element].sort((a, b) => {
-					return new Date(a.datetime) > new Date(b.datetime)
-						? 1
-						: new Date(a.datetime) < new Date(b.datetime)
-						? -1
-						: 0;
-				})[0]
-			);
-		});
-
-		// console.log(days);
-		// console.log(bolusInTimeRange);
-		// console.log(bolusInDayRange);
-		// console.log(groupedBolusByDay);
-		// console.log(finalBolusList);
-
-		// Inserting tags
-		finalBolusList.forEach(async (bolus) => {
-			// Checking if already exist before inserting
-			let res = await Tags.findOne({
-				where: {
-					userId: userId,
-					name: range.name,
-					startDatetime: bolus.datetime,
-					wasAuto: true,
-				},
+	// Check if there are detections ranges configurated
+	if (rangesValues.length) {
+		// Pour chaque range configurée
+		rangesValues.forEach((range) => {
+			let days = convertNumberToDays(range.daysSelected);
+			// On ne prend que les bolus qui sont dans la range de time
+			let bolusInTimeRange = bolusDataValues.filter((bolus) => {
+				let hours = new Date(bolus.datetime)
+					.toISOString()
+					.substring(11, 16);
+				return hours >= range.fromTime && hours <= range.toTime;
 			});
-			if (res) {
-				console.log(res);
-			} else {
-				await Tags.create({
-					userId: userId,
-					name: range.name,
-					startDatetime: bolus.datetime,
-					endDatetime: bolus.datetime,
-					isPending: true,
-					wasAuto: true,
+
+			// Puis uniquement ceux qui sont dans le(s) bon(s) jour(s)
+			let bolusInDayRange = bolusInTimeRange.filter((bolus) => {
+				// On récupère le jour du bolus en question
+				let bolusDay = new Date(bolus.datetime).getUTCDay();
+				// Si la liste des jours de la range contient le jour de notre bolus c'est OK
+				return days.includes(bolusDay);
+			});
+
+			// On groupe les bolus par jours pour ensuite prendre celui qui apparait le plus tôt dans la journée
+			let groupedBolusByDay = groupByDate(bolusInDayRange);
+
+			let finalBolusList = [];
+			Object.keys(groupedBolusByDay).forEach((element) => {
+				finalBolusList.push(
+					groupedBolusByDay[element].sort((a, b) => {
+						return new Date(a.datetime) > new Date(b.datetime)
+							? 1
+							: new Date(a.datetime) < new Date(b.datetime)
+							? -1
+							: 0;
+					})[0]
+				);
+			});
+			// Inserting tags
+			finalBolusList.forEach(async (bolus) => {
+				// Checking if already exist before inserting
+				let res = await Tags.findOne({
+					where: {
+						userId: userId,
+						name: range.name,
+						startDatetime: bolus.datetime,
+						wasAuto: true,
+					},
 				});
-			}
+				if (res) {
+					// console.log(res);
+				} else {
+					await Tags.create({
+						userId: userId,
+						name: range.name,
+						startDatetime: bolus.datetime,
+						endDatetime: bolus.datetime,
+						isPending: true,
+						wasAuto: true,
+					});
+				}
+			});
 		});
-	});
+	}
+
 	return 1;
 }
 

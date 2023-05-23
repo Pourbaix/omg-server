@@ -14,7 +14,7 @@ const sequelize = new Sequelize(
 		dialect: "mariadb",
 		port: dbInfo.port,
 		host: dbInfo.host,
-		logging: env == "test" ? false : true,
+		logging: env == "test" || env == "production" ? false : true,
 	}
 );
 // console.log(sequelize);
