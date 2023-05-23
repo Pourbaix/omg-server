@@ -6,7 +6,7 @@
 	"scripts": {
 		"start": "node app.js",
 		"inittest": "cross-env NODE_ENV=test node test_script.js && npx sequelize db:seed:all --env test --seeders-path ./seeders/test",
-		"test": "jest ./test/utils && npm run inittest && cross-env NODE_ENV=test mocha"
+		"test": "jest ./test/utils && npm run inittest && cross-env NODE_ENV=test mocha --exit"
 	},
 	"jest": {
 		"testEnvironment": "node",
