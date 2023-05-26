@@ -33,6 +33,10 @@ const AutoImportData = sequelize.define(
 			type: DataTypes.TEXT,
 			allowNull: false,
 		},
+		patientUsername: {
+			type: DataTypes.TEXT,
+			allowNull: false,
+		},
 		lastDataUpdate: {
 			type: DataTypes.DATE,
 			allowNull: true,

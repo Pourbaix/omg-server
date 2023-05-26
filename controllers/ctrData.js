@@ -513,8 +513,9 @@ exports.addAutoImportAccountData = async function (req, res) {
 				let password = req.body["password"];
 				let username = req.body["username"];
 				let country = req.body["country"];
+				let patientUsername = req.body["patientUsername"];
 
-				if (!password || !username || !country) {
+				if (!password || !username || !country || !patientUsername) {
 					return res.status(400).json("Some params are missing !");
 				}
 				let response = await AutoImportData.findOne({
@@ -533,7 +534,8 @@ exports.addAutoImportAccountData = async function (req, res) {
 					await careLinkImport.testCredential(
 						username,
 						password,
-						country
+						country,
+						patientUsername
 					);
 				} catch {
 					return res
@@ -546,6 +548,7 @@ exports.addAutoImportAccountData = async function (req, res) {
 					medtronicUser: req.body["username"],
 					medtronicPassword: req.body["password"],
 					country: req.body["country"],
+					patientUsername: req.body["patientUsername"],
 					lastDataUpdate: undefined,
 				});
 				return res
@@ -582,14 +585,22 @@ exports.deleteAutoImportConfiguration = async (req, res) => {
 					},
 				});
 				if (response) {
-					await AutoImportData.destroy({
-						where: {
-							userId: user.id,
-						},
-					});
-					res.status(200).json("Config deleted");
+					try {
+						await AutoImportData.destroy({
+							where: {
+								userId: user.id,
+							},
+						});
+						return res.status(200).json("Config deleted");
+					} catch (e) {
+						console.log(e);
+						return res
+							.status(500)
+							.json("Error while deleting config");
+					}
+				} else {
+					return res.status(200).json("Nothing to delete");
 				}
-				res.status(200).json("Nothing to delete");
 			}
 		)(req, res);
 	} catch (e) {
