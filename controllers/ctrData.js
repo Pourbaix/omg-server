@@ -900,8 +900,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 			if (res) {
 				seeDup++;
 			} else {
-				console.log(dbFormatDatetime);
-				console.log(res);
+				// console.log(dbFormatDatetime);
 				try {
 					Insulin.create({
 						datetime: dbFormatDatetime,

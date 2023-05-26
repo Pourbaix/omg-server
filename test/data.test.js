@@ -233,6 +233,7 @@ describe("Testing glucose data routes", () => {
 					username: "test123",
 					password: "test123",
 					country: "BE",
+					patientUsername: "test",
 				});
 			expect(response.body).to.equal(
 				"Request Received and auto import initialized"
@@ -253,6 +254,7 @@ describe("Testing glucose data routes", () => {
 					username: "test123",
 					password: "test123",
 					country: "BE",
+					patientUsername: "test",
 				});
 			expect(response.body).to.equal(
 				"Request Received and auto import initialized"
@@ -267,6 +269,7 @@ describe("Testing glucose data routes", () => {
 					username: "test123",
 					password: "test123",
 					country: "BE",
+					patientUsername: "test",
 				});
 			expect(response.body).to.equal(
 				"User already has an account configurated! Use another route to update it."
@@ -286,6 +289,7 @@ describe("Testing glucose data routes", () => {
 					username: "test123",
 					password: "test123",
 					country: "BE",
+					patientUsername: "test",
 				});
 			expect(mock.callCount).to.equal(1);
 			expect(response.body).to.equal(
@@ -305,6 +309,7 @@ describe("Testing glucose data routes", () => {
 					username: "test123",
 					password: "test123",
 					country: "BE",
+					patientUsername: "test",
 				});
 			expect(response.body).to.equal(
 				"Request Received and auto import initialized"
@@ -331,6 +336,7 @@ describe("Testing glucose data routes", () => {
 					username: "test123",
 					password: "test123",
 					country: "BE",
+					patientUsername: "test",
 				});
 			expect(response.body).to.equal(
 				"Request Received and auto import initialized"

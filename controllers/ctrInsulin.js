@@ -65,7 +65,7 @@ exports.getBolusWithFormattedDateAndTime = function (req, res) {
 					limit: 10000,
 					order: sequelize.literal("updatedAt DESC"),
 				}).then((events) => {
-					console.log("OK QUERY");
+					// console.log("OK QUERY");
 					let bolusEvents = [];
 					events.forEach((event) => {
 						// ATTENTION => CES DATE ET TIME SONT EN UTC 0
