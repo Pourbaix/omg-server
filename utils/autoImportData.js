@@ -29,7 +29,8 @@ async function autoImport(userId) {
 	let data = await careLinkImport.getLast24DataObject(
 		userInfo.dataValues.medtronicUser,
 		userInfo.dataValues.medtronicPassword,
-		userInfo.dataValues.country
+		userInfo.dataValues.country,
+		userInfo.dataValues.patientUsername
 	);
 
 	let glucoseData = data["sgs"];

@@ -55,10 +55,16 @@ function printdgb(msg) {
 }
 
 class CareLinkClient {
-	constructor(carelinkUsername, carelinkPassword, carelinkCountry) {
+	constructor(
+		carelinkUsername,
+		carelinkPassword,
+		carelinkCountry,
+		patientUsername
+	) {
 		this.carelinkUsername = carelinkUsername;
 		this.carelinkPassword = carelinkPassword;
 		this.carelinkCountry = carelinkCountry;
+		this.patientUsername = patientUsername;
 
 		this.sessionUser = null;
 		this.sessionProfile = null;
@@ -378,11 +384,18 @@ class CareLinkClient {
 		);
 	}
 
-	async getConnectDisplayMessage(username, role, endpointUrl) {
+	async getConnectDisplayMessage(
+		username,
+		role,
+		endpointUrl,
+		patientUsername
+	) {
 		let userJson = {
 			username: username,
 			role: role,
+			patientId: patientUsername,
 		};
+		console.log(endpointUrl);
 		let requestBody = JSON.stringify(userJson);
 		let recentData = await this.getData(
 			null,
@@ -488,7 +501,8 @@ class CareLinkClient {
 				return await this.getConnectDisplayMessage(
 					this.sessionProfile["username"],
 					role,
-					this.sessionCountrySettings["blePereodicDataEndpoint"]
+					this.sessionCountrySettings["blePereodicDataEndpoint"],
+					this.patientUsername
 				);
 			} else {
 				return await this.getLast24Hours();
@@ -506,16 +520,31 @@ class CareLinkClient {
 	}
 }
 
-async function getLast24DataObject(username, password, country) {
-	let connexion = new CareLinkClient(username, password, country);
+async function getLast24DataObject(
+	username,
+	password,
+	country,
+	patientUsername
+) {
+	let connexion = new CareLinkClient(
+		username,
+		password,
+		country,
+		patientUsername
+	);
 	await connexion.executeLoginProcedure();
 	let recentData = await connexion.getRecentData();
 	// connexion.clearAllCookies();
 	return recentData;
 }
 
-async function testCredential(username, password, country) {
-	let testConnexion = new CareLinkClient(username, password, country);
+async function testCredential(username, password, country, patientUsername) {
+	let testConnexion = new CareLinkClient(
+		username,
+		password,
+		country,
+		patientUsername
+	);
 	let result = await testConnexion.executeLoginProcedure();
 	return result;
 }
