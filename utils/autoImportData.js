@@ -314,7 +314,10 @@ async function runTagDetection(userId) {
 				let hours = new Date(bolus.datetime)
 					.toISOString()
 					.substring(11, 16);
-				return hours >= range.fromTime && hours <= range.toTime;
+				return (
+					hours >= range.fromTime.substring(0, 5) &&
+					hours <= range.toTime.substring(0, 5)
+				);
 			});
 
 			// Puis uniquement ceux qui sont dans le(s) bon(s) jour(s)
