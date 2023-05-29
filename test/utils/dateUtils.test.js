@@ -53,13 +53,6 @@ describe("Testing 'hasDST(date: Date, zone: str)' method", () => {
 	});
 });
 
-// describe("Testing 'normalizedUTC(date: int)' method", () => {
-// 	test("Verify that offset is canceled", () => {
-// 		let currentServerOffset = new Date().getTimezoneOffset() * 60000;
-// 		expect(dateUtils.normalizedUTC(0)).toBe(0 + currentServerOffset);
-// 	});
-// });
-
 describe("Testing 'normalizeUTCWithCountry(country: str, date: int)' module", () => {
 	it("Verify that offset is applyed correctly in DST period", () => {
 		// CHANGE SYSTEM DATE

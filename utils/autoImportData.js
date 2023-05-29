@@ -200,6 +200,8 @@ async function autoImport(userId) {
 	// NOW RUN TAG DETECTION JOB ON LAST 24H MEAL BOLUS DATA
 	await runTagDetection(userId);
 }
+
+// Utilisé par le CRON job pour effectuer l'import auto pour tous les utilisateurs
 async function autoImportAllUsers() {
 	let userList = await AutoImportData.findAll({ attributes: ["userId"] });
 	for (let item in userList) {
@@ -285,10 +287,8 @@ async function runTagDetection(userId) {
 			userId: userId,
 			insulinType: "MEAL",
 			datetime: {
-				[Op.between]: [
-					targetDate.toISOString(),
-					currentDate.toISOString(),
-				],
+				[Op.gte]: targetDate.toISOString(),
+				[Op.lte]: currentDate.toISOString(),
 			},
 		},
 	});
