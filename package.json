@@ -6,7 +6,8 @@
 	"scripts": {
 		"start": "node app.js",
 		"inittest": "cross-env NODE_ENV=test node test_script.js && npx sequelize db:seed:all --env test --seeders-path ./seeders/test",
-		"test": "jest ./test/utils && npm run inittest && cross-env NODE_ENV=test mocha --exit"
+		"test": "jest ./test/utils && npm run inittest && cross-env NODE_ENV=test mocha --exit",
+		"coverage": "jest ./test/utils --coverage && npm run inittest && cross-env NODE_ENV=test nyc mocha --exit"
 	},
 	"jest": {
 		"testEnvironment": "node",
@@ -59,6 +60,7 @@
 	},
 	"devDependencies": {
 		"cross-env": "^7.0.3",
-		"jest": "^29.5.0"
+		"jest": "^29.5.0",
+		"nyc": "^15.1.0"
 	}
 }

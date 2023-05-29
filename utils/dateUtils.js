@@ -37,6 +37,7 @@ function toNormalizedUTCISOStringWithCountry(country, date) {
 }
 
 function roundTo5Minutes(numberOfMinutes) {
+	// Rounds minutes of datetime to a multiple of 5
 	if (numberOfMinutes % 5 == 0) {
 		return numberOfMinutes;
 	}
@@ -53,6 +54,7 @@ function roundTo5Minutes(numberOfMinutes) {
 }
 
 function ISOTo5Minutes(ISODate) {
+	// Rounds minutes of datetime to a multiple of 5 and returns ISO date
 	let newDate = new Date(ISODate);
 	let minutes = newDate.getMinutes();
 	let newMinutes = roundTo5Minutes(minutes);

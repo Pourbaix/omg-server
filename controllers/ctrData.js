@@ -233,6 +233,17 @@ exports.postFile = function (req, res) {
 	}
 };
 
+/**
+ * ------------
+ * postManyData
+ * ------------
+ *
+ * Used to post many glucose data in the DB at once.
+ * Mainly for tests
+ *
+ * Returns a JSON message response
+ */
+
 exports.postManyData = function (req, res) {
 	try {
 		passport.authenticate(
@@ -504,6 +515,16 @@ exports.deleteAll = async function (req, res) {
 	}
 };
 
+/**
+ * ------------------------
+ * addAutoImportAccountData
+ * ------------------------
+ *
+ * Add autoimport config for a user if the connection test works
+ *
+ * Returns a JSON message response
+ */
+
 exports.addAutoImportAccountData = async function (req, res) {
 	try {
 		passport.authenticate(
@@ -518,6 +539,7 @@ exports.addAutoImportAccountData = async function (req, res) {
 				if (!password || !username || !country || !patientUsername) {
 					return res.status(400).json("Some params are missing !");
 				}
+				// Check if user already has an autoimport config
 				let response = await AutoImportData.findOne({
 					where: {
 						userId: user.id,
@@ -531,6 +553,7 @@ exports.addAutoImportAccountData = async function (req, res) {
 						);
 				}
 				try {
+					// Check if given credentials are correct
 					await careLinkImport.testCredential(
 						username,
 						password,
@@ -542,7 +565,7 @@ exports.addAutoImportAccountData = async function (req, res) {
 						.status(500)
 						.json("Provided credentials are not correct");
 				}
-
+				// If credentials are correct, create autoimport config in DB
 				response = await AutoImportData.create({
 					userId: user.id,
 					medtronicUser: req.body["username"],
@@ -560,6 +583,16 @@ exports.addAutoImportAccountData = async function (req, res) {
 		res.status(500).json(e);
 	}
 };
+
+/**
+ * -----------------------------
+ * deleteAutoImportConfiguration
+ * -----------------------------
+ *
+ * Used to delete an auto import config for a given userId
+ *
+ * Returns a JSON message response
+ */
 
 exports.deleteAutoImportConfiguration = async (req, res) => {
 	try {
@@ -579,6 +612,7 @@ exports.deleteAutoImportConfiguration = async (req, res) => {
 						message: "Incorrect token",
 					});
 				}
+				// First, check if a config is present
 				let response = await AutoImportData.findOne({
 					where: {
 						userId: user.id,
@@ -607,6 +641,16 @@ exports.deleteAutoImportConfiguration = async (req, res) => {
 		res.status(500).json(e);
 	}
 };
+
+/**
+ * ----------------------------
+ * checkAutoImportConfiguration
+ * ----------------------------
+ *
+ * Used to check auto import config for a given userId
+ *
+ * Returns a JSON message response
+ */
 
 exports.checkAutoImportConfiguration = async (req, res) => {
 	try {
@@ -644,6 +688,16 @@ exports.checkAutoImportConfiguration = async (req, res) => {
 		res.status(500).json(e);
 	}
 };
+
+/**
+ * --------------
+ * autoImportData
+ * --------------
+ *
+ * Method to process auto import with a given userId
+ *
+ * Returns a JSON message response
+ */
 
 exports.autoImportData = async (req, res) => {
 	try {
@@ -698,6 +752,17 @@ exports.autoImportData = async (req, res) => {
 	}
 };
 
+/**
+ * -------------------
+ * getRangesWithNoData
+ * -------------------
+ *
+ * Method to recover ranges with no datas
+ * Returns a list with all the datetimes range with no data
+ * Used by the homeChart, statistics and the data holes component
+ *
+ */
+
 exports.getRangesWithNoData = async (req, res) => {
 	try {
 		passport.authenticate(
@@ -718,6 +783,7 @@ exports.getRangesWithNoData = async (req, res) => {
 					});
 				}
 
+				// Reciver all glucose data
 				let response = await GlucoseData.findAll({
 					where: {
 						userId: user.id,
@@ -728,6 +794,7 @@ exports.getRangesWithNoData = async (req, res) => {
 					return x.dataValues;
 				});
 				let period_without_data = [];
+				// If the period between 2 data is greater than 5 minutes, we add it to the period_without_data list
 				data_list.forEach((element, index, array) => {
 					if (index < array.length - 1) {
 						let current_datetime = new Date(
@@ -737,7 +804,7 @@ exports.getRangesWithNoData = async (req, res) => {
 							array[index + 1].datetime
 						).getTime();
 						let diff = next_datetime - current_datetime;
-						// Le 300000 correspond au threshold en ms (donc on prend les données 15mins avant et après)
+						// Le 300000 correspond au threshold en ms ici 5 minutes
 						if (diff > 300000) {
 							period_without_data.push({
 								start: element.datetime,
@@ -753,6 +820,15 @@ exports.getRangesWithNoData = async (req, res) => {
 		res.status(500).json(e);
 	}
 };
+
+/**
+ * --------------
+ * getDataInRange
+ * --------------
+ *
+ * Method to recover data in a given datetime range
+ * Used for statistics
+ */
 
 exports.getDataInRange = async (req, res) => {
 	try {
@@ -785,6 +861,7 @@ exports.getDataInRange = async (req, res) => {
 						"startDate has to be older than endDate."
 					);
 				}
+				// Find all data in the given range
 				let insulinResponse = await Insulin.findAll({
 					where: {
 						userId: user.id,
@@ -805,6 +882,7 @@ exports.getDataInRange = async (req, res) => {
 					},
 				});
 
+				// Send the result to the user
 				let finalData = {
 					insulin: insulinResponse.map((element) => {
 						return element.dataValues;
@@ -840,6 +918,14 @@ async function getDatetimesDB(user) {
 
 	return await response;
 }
+
+/**
+ * -------------
+ * insertIfNoDup
+ * -------------
+ *
+ * Main function to insert data from the manual import (with CSV file)
+ */
 
 async function insertIfNoDup(dataObj, importName, user) {
 	let seeDup = 0;
@@ -900,7 +986,6 @@ async function insertIfNoDup(dataObj, importName, user) {
 			if (res) {
 				seeDup++;
 			} else {
-				// console.log(dbFormatDatetime);
 				try {
 					Insulin.create({
 						datetime: dbFormatDatetime,
@@ -1101,32 +1186,32 @@ function formatDatetime(strDate, strTime) {
 	return isoDate;
 }
 
-// Duplicate
-function formatDatetimeWithoutRound(strDate, strTime) {
-	let localDatetime = new Date(
-		strDate.substring(0, 4),
-		strDate.substring(5, 7) - 1,
-		strDate.substring(8, 10),
-		strTime.split(":")[0],
-		strTime.split(":")[1]
-	).toLocaleString("be-BE", {
-		timeZone: "CET",
-	});
-	let localDate = localDatetime.split(",")[0];
-	let localTime = localDatetime.split(",")[1];
-	let gmt = getGMT(strDate, strTime, localTime);
+// Duplicate not used anymore
+// function formatDatetimeWithoutRound(strDate, strTime) {
+// 	let localDatetime = new Date(
+// 		strDate.substring(0, 4),
+// 		strDate.substring(5, 7) - 1,
+// 		strDate.substring(8, 10),
+// 		strTime.split(":")[0],
+// 		strTime.split(":")[1]
+// 	).toLocaleString("be-BE", {
+// 		timeZone: "CET",
+// 	});
+// 	let localDate = localDatetime.split(",")[0];
+// 	let localTime = localDatetime.split(",")[1];
+// 	let gmt = getGMT(strDate, strTime, localTime);
 
-	let year = parseInt(localDate.split(".")[2]);
-	let month = parseInt(localDate.split(".")[1]);
-	let day = parseInt(localDate.split(".")[0]);
-	let hours = parseInt(strTime.split(":")[0]) + gmt;
-	let minutes = parseInt(strTime.split(":")[1]);
+// 	let year = parseInt(localDate.split(".")[2]);
+// 	let month = parseInt(localDate.split(".")[1]);
+// 	let day = parseInt(localDate.split(".")[0]);
+// 	let hours = parseInt(strTime.split(":")[0]) + gmt;
+// 	let minutes = parseInt(strTime.split(":")[1]);
 
-	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
+// 	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
 
-	let isoDate = newObjDatetime.toISOString();
-	return isoDate;
-}
+// 	let isoDate = newObjDatetime.toISOString();
+// 	return isoDate;
+// }
 /**
  * find the column number of time, date and glucose in the filerows array at start line.
  *

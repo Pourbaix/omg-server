@@ -8,6 +8,20 @@ const Sequelize = seq.Sequelize,
 	DataTypes = seq.DataTypes;
 const User = require("./modelUser");
 
+/**
+ * ----------------------
+ * modelAutoImportData.js
+ * ----------------------
+ *
+ * This model is used to store auto import configuration, which is composed by:
+ * - The id of the corresponding user ("userId"),
+ * - The username of the medtronic account ("medtronicUser"),
+ * - The password of the medtronic account ("medtronicPassword"),
+ * - The country of the medtronic account ("country"),
+ * - The username of the target patient => Added due to an API update from CarLink ("patientUsername"),
+ * - The last time the auto import has been done for this user => NOT USED ANYMORE ("lastDataUpdate").
+ */
+
 const AutoImportData = sequelize.define(
 	"autoimportdata",
 	{
