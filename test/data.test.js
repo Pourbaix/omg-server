@@ -392,4 +392,5 @@ describe("Testing glucose data routes", () => {
 			expect(response.status).to.equal(200);
 		});
 	});
+	describe("Testing getGMT method", () => {});
 });

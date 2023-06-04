@@ -45,7 +45,7 @@ seq.sequelize
 	.catch((error) =>
 		console.log("An error occurred while Synchronization.\n", error)
 	);
-AutoImportData.sync({ alter: true });
+// AutoImportData.sync({ alter: true });
 // // Insulin.drop();
 // Insulin.sync({ alter: true });
 

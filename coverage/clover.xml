@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1685368743795" clover="3.2.0">
-  <project timestamp="1685368743795" name="All files">
+<coverage generated="1685728696031" clover="3.2.0">
+  <project timestamp="1685728696031" name="All files">
     <metrics statements="34" coveredstatements="25" conditionals="7" coveredconditionals="5" methods="6" coveredmethods="4" elements="47" coveredelements="34" complexity="0" loc="34" ncloc="34" packages="1" files="1" classes="1"/>
     <file name="dateUtils.js" path="C:\Users\micha\Documents\TFE\OMG-GH\omg-server\utils\dateUtils.js">
       <metrics statements="34" coveredstatements="25" conditionals="7" coveredconditionals="5" methods="6" coveredmethods="4"/>
