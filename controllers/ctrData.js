@@ -502,7 +502,12 @@ exports.deleteAll = async function (req, res) {
 						message: "Incorrect token",
 					});
 				}
-				let response = await GlucoseData.destroy({
+				await GlucoseData.destroy({
+					where: {
+						userId: user.id,
+					},
+				});
+				await Insulin.destroy({
 					where: {
 						userId: user.id,
 					},
@@ -1145,6 +1150,8 @@ function getGMT(strDate, strTime, strTimeToCompare) {
 		return GMT;
 	}
 }
+exports.getGMT = getGMT;
+
 /**
  * take date and time to return datetime
  *
@@ -1185,6 +1192,8 @@ function formatDatetime(strDate, strTime) {
 	let isoDate = almostFinalDatetime.toISOString();
 	return isoDate;
 }
+
+exports.formatDatetime = formatDatetime;
 
 // Duplicate not used anymore
 // function formatDatetimeWithoutRound(strDate, strTime) {
@@ -1295,6 +1304,9 @@ function findInFileRows(fileRows, start) {
 		colDeliveringStatus,
 	};
 }
+
+exports.findInFileRows = findInFileRows;
+
 /**
  * Retrieve all user's data according to the given tags.
  *
