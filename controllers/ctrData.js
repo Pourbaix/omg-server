@@ -847,10 +847,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 	let mostRecentInsulinDatetime = "";
 	// Glucose
 	for (let i = 0; i < dataObj.date.length; i++) {
-		let dbFormatDatetime = formatDatetimeFixed(
-			dataObj.date[i],
-			dataObj.time[i]
-		);
+		let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
 		await GlucoseData.findOne({
 			logging: false,
 			where: {
@@ -873,7 +870,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 	}
 	// Insulin
 	for (let z = 0; z < dataObj.carbDate.length; z++) {
-		let dbFormatDatetime = formatDatetimeFixed(
+		let dbFormatDatetime = formatDatetime(
 			dataObj.carbDate[z],
 			dataObj.carbTime[z]
 		);
@@ -1045,7 +1042,6 @@ function getFromMiniMedPump(req, res, user, importName) {
 }
 
 function getGMT(strDate, strTime, strTimeToCompare) {
-	// console.log(strDate, strTime, strTimeToCompare);
 	let myDate = new Date(strDate + " " + strTime);
 	let myDateHoursOnly = myDate.getHours();
 
@@ -1105,48 +1101,32 @@ function formatDatetime(strDate, strTime) {
 	return isoDate;
 }
 
-// Duplicate not used anymore
-// function formatDatetimeWithoutRound(strDate, strTime) {
-// 	let localDatetime = new Date(
-// 		strDate.substring(0, 4),
-// 		strDate.substring(5, 7) - 1,
-// 		strDate.substring(8, 10),
-// 		strTime.split(":")[0],
-// 		strTime.split(":")[1]
-// 	).toLocaleString("be-BE", {
-// 		timeZone: "CET",
-// 	});
-// 	let localDate = localDatetime.split(",")[0];
-// 	let localTime = localDatetime.split(",")[1];
-// 	let gmt = getGMT(strDate, strTime, localTime);
-
-// 	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
-
-// 	let isoDate = newObjDatetime.toISOString();
-// 	return isoDate;
-// }
-
-function formatDatetimeFixed(strDate, strTime) {
-	let localServerDatetime = new Date(
+// Duplicate
+function formatDatetimeWithoutRound(strDate, strTime) {
+	let localDatetime = new Date(
 		strDate.substring(0, 4),
 		strDate.substring(5, 7) - 1,
 		strDate.substring(8, 10),
 		strTime.split(":")[0],
 		strTime.split(":")[1]
-	);
-	let dst = dateUtils.hasDST(localServerDatetime, "Europe/Brussels");
-	let dataOffset = dst ? 2 : 1;
-	localServerDatetime.setTime(
-		localServerDatetime.getTime() -
-			(localServerDatetime.getTimezoneOffset() / 60 + dataOffset) *
-				3600000
-	);
-	localServerDatetime.setMinutes(
-		dateUtils.roundTo5Minutes(localServerDatetime.getMinutes())
-	);
-	return localServerDatetime.toISOString();
-}
+	).toLocaleString("be-BE", {
+		timeZone: "CET",
+	});
+	let localDate = localDatetime.split(",")[0];
+	let localTime = localDatetime.split(",")[1];
+	let gmt = getGMT(strDate, strTime, localTime);
 
+	let year = parseInt(localDate.split(".")[2]);
+	let month = parseInt(localDate.split(".")[1]);
+	let day = parseInt(localDate.split(".")[0]);
+	let hours = parseInt(strTime.split(":")[0]) + gmt;
+	let minutes = parseInt(strTime.split(":")[1]);
+
+	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
+
+	let isoDate = newObjDatetime.toISOString();
+	return isoDate;
+}
 /**
  * find the column number of time, date and glucose in the filerows array at start line.
  *
