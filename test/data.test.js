@@ -10,6 +10,9 @@ const GlocuseData = require("../models/modelGlucoseData");
 const Insulin = require("../models/modelInsulin");
 const AutoImportData = require("../models/modelAutoImportData");
 
+// To Make Tests on controller helper functions
+const ctrData = require("../controllers/ctrData");
+
 // To Test auto-import, will be mocked
 const careLinkImport = require("../utils/careLinkImport.js");
 
@@ -390,6 +393,50 @@ describe("Testing glucose data routes", () => {
 				.send();
 			expect(response.body).to.be.ok;
 			expect(response.status).to.equal(200);
+		});
+	});
+});
+describe("Testing data controller functions helpers", () => {
+	describe("Testing getGMT function helper", () => {
+		it("getGMT with strTime > strTimeToCompare", () => {
+			expect(
+				ctrData.getGMT("2023/03/15", "22:00:00", "21:00:00")
+			).to.equal(1);
+			expect(
+				ctrData.getGMT("2023/03/15", "23:00:00", "11:00:00")
+			).to.equal(12);
+			expect(
+				ctrData.getGMT("2023/03/15", "16:00:00", "15:00:00")
+			).to.equal(1);
+			expect(
+				ctrData.getGMT("2023/03/15", "16:00:00", "14:00:00")
+			).to.equal(2);
+			expect(
+				ctrData.getGMT("2023/03/15", "12:00:00", "08:00:00")
+			).to.equal(4);
+			expect(
+				ctrData.getGMT("2023/01/01", "12:00:00", "08:00:00")
+			).to.equal(4);
+		});
+		it("getGMT with strTime < strTimeToCompare", () => {
+			expect(
+				ctrData.getGMT("2023/03/15", "21:00:00", "22:00:00")
+			).to.equal(-1);
+			expect(
+				ctrData.getGMT("2023/03/15", "11:00:00", "23:00:00")
+			).to.equal(-12);
+			expect(
+				ctrData.getGMT("2023/03/15", "19:00:00", "23:00:00")
+			).to.equal(-4);
+			expect(
+				ctrData.getGMT("2023/03/15", "16:00:00", "17:00:00")
+			).to.equal(-1);
+			expect(
+				ctrData.getGMT("2023/03/15", "12:00:00", "18:00:00")
+			).to.equal(-6);
+			expect(
+				ctrData.getGMT("2023/01/01", "05:00:00", "11:00:00")
+			).to.equal(-6);
 		});
 	});
 });
