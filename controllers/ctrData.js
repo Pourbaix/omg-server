@@ -938,7 +938,10 @@ async function insertIfNoDup(dataObj, importName, user) {
 	let mostRecentInsulinDatetime = "";
 	// Glucose
 	for (let i = 0; i < dataObj.date.length; i++) {
-		let dbFormatDatetime = formatDatetime(dataObj.date[i], dataObj.time[i]);
+		let dbFormatDatetime = formatDatetimeFixed(
+			dataObj.date[i],
+			dataObj.time[i]
+		);
 		await GlucoseData.findOne({
 			logging: false,
 			where: {
@@ -961,7 +964,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 	}
 	// Insulin
 	for (let z = 0; z < dataObj.carbDate.length; z++) {
-		let dbFormatDatetime = formatDatetime(
+		let dbFormatDatetime = formatDatetimeFixed(
 			dataObj.carbDate[z],
 			dataObj.carbTime[z]
 		);
@@ -1132,6 +1135,7 @@ function getFromMiniMedPump(req, res, user, importName) {
 }
 
 function getGMT(strDate, strTime, strTimeToCompare) {
+	// console.log(strDate, strTime, strTimeToCompare);
 	let myDate = new Date(strDate + " " + strTime);
 	let myDateHoursOnly = myDate.getHours();
 
@@ -1195,6 +1199,26 @@ function formatDatetime(strDate, strTime) {
 
 exports.formatDatetime = formatDatetime;
 
+function formatDatetimeFixed(strDate, strTime) {
+	let localServerDatetime = new Date(
+		strDate.substring(0, 4),
+		strDate.substring(5, 7) - 1,
+		strDate.substring(8, 10),
+		strTime.split(":")[0],
+		strTime.split(":")[1]
+	);
+	let dst = dateUtils.hasDST(localServerDatetime, "Europe/Brussels");
+	let dataOffset = dst ? 2 : 1;
+	localServerDatetime.setTime(
+		localServerDatetime.getTime() -
+			(localServerDatetime.getTimezoneOffset() / 60 + dataOffset) *
+				3600000
+	);
+	localServerDatetime.setMinutes(
+		dateUtils.roundTo5Minutes(localServerDatetime.getMinutes())
+	);
+	return localServerDatetime.toISOString();
+}
 // Duplicate not used anymore
 // function formatDatetimeWithoutRound(strDate, strTime) {
 // 	let localDatetime = new Date(
