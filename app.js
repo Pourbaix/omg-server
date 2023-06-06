@@ -5,6 +5,13 @@ const AutoImportData = require("./models/modelAutoImportData");
 const Insulin = require("./models/modelInsulin");
 const autoImportData = require("./utils/autoImportData");
 
+/////////////////////////////////////////////////
+// Use helmet to avoid common http security risks
+const helmet = require("helmet");
+app.use(helmet());
+
+/////////////////////////////////////////////////
+
 require("dotenv").config();
 
 ////////////////// Cors //////////////////////////////
