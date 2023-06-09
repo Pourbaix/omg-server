@@ -52,6 +52,7 @@
 		"passport": "^0.6.0",
 		"passport-jwt": "^4.0.1",
 		"passport-local": "^1.0.0",
+		"rate-limiter-flexible": "^2.4.1",
 		"sequelize": "^6.28.0",
 		"serve-static": "^1.15.0",
 		"sinon": "^15.0.4",

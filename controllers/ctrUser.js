@@ -3,6 +3,32 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const passport = require("../app");
 
+///////////////////////////////////////////////////////////
+/////////////// Rate Limiter Definition ///////////////////
+///////////////////////////////////////////////////////////
+const { RateLimiterMemory } = require("rate-limiter-flexible");
+
+const maxWrongAttemptsByIPperDay = 100;
+const maxConsecutiveFailsByUsernameAndIP = 10;
+
+// Allows us to limit the number of failed connections for 1 day and for 1 ip address
+const limiterSlowBruteByIP = new RateLimiterMemory({
+	keyPrefix: "SlowBruteByIp",
+	points: maxWrongAttemptsByIPperDay,
+	duration: 60 * 60 * 24,
+	blockDuration: 60 * 60 * 24, // Block for 1 day, if 100 wrong attempts per day
+});
+
+// Allows us to limit the number of failed connections for 1 day, for one ip address and for 1 account
+const limiterConsecutiveFailsByUsernameAndIP = new RateLimiterMemory({
+	keyPrefix: "ConsecutiveFailsByUsernameAndIP",
+	points: maxConsecutiveFailsByUsernameAndIP,
+	duration: 60 * 60 * 24, // Store number for 24 h since first fail
+	blockDuration: 60 * 60, // Block for 1 hour
+});
+
+const getUsernameIPkey = (username, ip) => `${username}_${ip}`;
+
 //////////////////////////////////////////////////////
 /////////////// Routes controllers ///////////////////
 //////////////////////////////////////////////////////
@@ -73,30 +99,117 @@ exports.postSignin = async function (req, res) {
 		passport.authenticate(
 			"local-signin",
 			{ session: false },
-			function (err, user) {
-				if (err) {
-					return res.json({ status: "error", message: err });
+			async function (err, user) {
+				// Retrieving ip address and email of the account to create the auth identifier which will be used for the "limiterConsecutiveFailsByUsernameAndIP" limiter
+				const ipAddr = req.ip;
+				const usernameIPkey = getUsernameIPkey(req.body.email, ipAddr);
+
+				// Recover the different states of ips
+				// It returns null if no ips were detected has failed auth (in general when server started)
+				const [resUsernameAndIP, resSlowByIP] = await Promise.all([
+					limiterConsecutiveFailsByUsernameAndIP.get(usernameIPkey),
+					limiterSlowBruteByIP.get(ipAddr),
+				]);
+				// console.log(resUsernameAndIP, resSlowByIP);
+
+				// Number of seconds before the client can retry the auth
+				let retrySecs = 0;
+
+				// Set the number of seconds before the user can try to auth again
+				if (
+					resSlowByIP !== null &&
+					resSlowByIP.consumedPoints > maxWrongAttemptsByIPperDay
+				) {
+					retrySecs =
+						Math.round(resSlowByIP.msBeforeNext / 1000) || 1;
+				} else if (
+					resUsernameAndIP !== null &&
+					resUsernameAndIP.consumedPoints >
+						maxConsecutiveFailsByUsernameAndIP
+				) {
+					retrySecs =
+						Math.round(resUsernameAndIP.msBeforeNext / 1000) || 1;
 				}
-				if (!user) {
-					return res.json({
+
+				// If user is blocked
+				if (retrySecs > 0) {
+					res.set("Retry-After", String(retrySecs));
+					return res.status(429).json({
 						status: "error",
-						message: "Incorrect email and/or password",
+						message:
+							"Too many failure, try again in " +
+							retrySecs +
+							" seconds",
+					});
+					// if user is not yet blocked, he can try to auth
+				} else {
+					if (!user) {
+						try {
+							// if auth fails, we remove one from the counter
+							const promises = [
+								limiterSlowBruteByIP.consume(ipAddr),
+							];
+							if (err == "bad password") {
+								// Count failed attempts by Username + IP only for registered users
+								promises.push(
+									limiterConsecutiveFailsByUsernameAndIP.consume(
+										usernameIPkey
+									)
+								);
+							}
+
+							await Promise.all(promises);
+							return res.json({
+								status: "error",
+								message: "Incorrect email and/or password",
+							});
+						} catch (rlRejected) {
+							if (rlRejected instanceof Error) {
+								throw rlRejected;
+							} else {
+								res.set(
+									"Retry-After",
+									String(
+										Math.round(
+											rlRejected.msBeforeNext / 1000
+										)
+									) || 1
+								);
+								return res.status(429).json({
+									status: "error",
+									message:
+										"Too many failure, try again in " +
+										retrySecs +
+										" seconds",
+								});
+							}
+						}
+					}
+					// If auth is successful
+					req.logIn(user, { session: false }, async function (err) {
+						if (err) {
+							return res.json({ status: "error", message: err });
+						} else {
+							if (
+								resUsernameAndIP !== null &&
+								resUsernameAndIP.consumedPoints > 0
+							) {
+								// Reset limiter on successful authentification
+								await limiterConsecutiveFailsByUsernameAndIP.delete(
+									usernameIPkey
+								);
+							}
+							const token = jwt.sign(user.dataValues, "jwt1234", {
+								expiresIn: "2h",
+							});
+							return res.json({
+								status: "ok",
+								message: "connected",
+								token: token,
+							});
+						}
 					});
 				}
-				req.logIn(user, { session: false }, function (err) {
-					if (err) {
-						return res.json({ status: "error", message: err });
-					}
-					const token = jwt.sign(user.dataValues, "jwt1234", {
-						expiresIn: "2h",
-					});
-					// console.log(user.dataValues.id);
-					return res.json({
-						status: "ok",
-						message: "connected",
-						token: token,
-					});
-				});
 			}
 		)(req, res);
 	} catch (e) {
