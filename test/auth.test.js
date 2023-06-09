@@ -44,7 +44,7 @@ describe("Testing user routes", () => {
 		});
 		it("Test connection to server succes with good credentials", async () => {
 			// Connection with an existing user
-			const response = await request(server)
+			let response = await request(server)
 				.post("/api/users/signin")
 				.send({
 					email: "test@test.com",
@@ -54,6 +54,15 @@ describe("Testing user routes", () => {
 			expect(response.body.status).to.equal("ok");
 			expect(response.body.message).to.equal("connected");
 			expect(response.body.token).to.not.be.undefined;
+			let token = response.body.token;
+
+			response = await request(server)
+				.get("/api/users/verify")
+				.set({ Authorization: `Bearer ${token}` })
+				.send();
+			expect(response.status).to.equal(200);
+			expect(response.body.status).to.equal("equal");
+			expect(response.body.message).to.equal("valid key");
 		});
 	});
 

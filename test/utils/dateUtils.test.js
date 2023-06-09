@@ -53,6 +53,13 @@ describe("Testing 'hasDST(date: Date, zone: str)' method", () => {
 	});
 });
 
+describe("Testing 'normalizedUTC' module", () => {
+	it("Verify that offset is correctly canceled", () => {
+		expect(dateUtils.normalizedUTC(800000)).toBeTruthy();
+		expect(dateUtils.normalizedUTC(800000)).toBeLessThan(800000);
+	});
+});
+
 describe("Testing 'normalizeUTCWithCountry(country: str, date: int)' module", () => {
 	it("Verify that offset is applyed correctly in DST period", () => {
 		// CHANGE SYSTEM DATE
@@ -88,8 +95,43 @@ describe("Testing 'normalizeUTCWithCountry(country: str, date: int)' module", ()
 	});
 });
 
-describe("Testing 'toNormalizedUTCISOStringWithCountry(country: str, date: int)' ", () => {
-	it("", () => {});
+describe("Testing 'toNormalizedUTCISOStringWithCountry(country: str, date: int)' module", () => {
+	it("Verify that offset is applyed correctly in DST period", () => {
+		// CHANGE SYSTEM DATE
+		jest.useFakeTimers("modern");
+		// NEW DATE FOR THE TEST SYSTEM
+		jest.setSystemTime(new Date("2023-08-26T00:00:00.000Z"));
+
+		let result = dateUtils.toNormalizedUTCISOStringWithCountry("BE", 0);
+		// spy.mockRestore();
+		expect(result).toBe("1969-12-31T22:00:00.000Z");
+		let msOfTestDate = new Date("2023-08-26T00:00:00.000Z").getTime();
+		let targetDate = new Date("2023-08-25T22:00:00.000Z");
+		result = dateUtils.toNormalizedUTCISOStringWithCountry(
+			"BE",
+			msOfTestDate
+		);
+
+		expect(result).toBe(targetDate.toISOString());
+	});
+	it("Verify that offset is applyed correctly out of DST period", () => {
+		// CHANGE SYSTEM DATE
+		jest.useFakeTimers("modern");
+		// NEW DATE FOR THE TEST SYSTEM
+		jest.setSystemTime(new Date("2023-01-26T00:00:00.000Z"));
+
+		let result = dateUtils.toNormalizedUTCISOStringWithCountry("BE", 0);
+		// spy.mockRestore();
+		expect(result).toBe("1969-12-31T23:00:00.000Z");
+		let msOfTestDate = new Date("2023-08-26T00:00:00.000Z").getTime();
+		let targetDate = new Date("2023-08-25T23:00:00.000Z");
+		result = dateUtils.toNormalizedUTCISOStringWithCountry(
+			"BE",
+			msOfTestDate
+		);
+
+		expect(result).toBe(targetDate.toISOString());
+	});
 });
 
 describe("Testing 'roundTo5Minutes(date: int)' module", () => {
@@ -119,6 +161,9 @@ describe("Testing 'ISOTo5Minutes(date: ISODate)' module", () => {
 		);
 		expect(dateUtils.ISOTo5Minutes("2023-08-25T09:17:00.000Z")).toBe(
 			"2023-08-25T09:15:00.000Z"
+		);
+		expect(dateUtils.ISOTo5Minutes("2023-08-25T09:50:00.000Z")).toBe(
+			"2023-08-25T09:50:00.000Z"
 		);
 	});
 });
