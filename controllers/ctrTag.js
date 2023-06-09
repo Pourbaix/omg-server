@@ -72,7 +72,7 @@ exports.postPending = function (req, res) {
 						},
 					}).then((res) => {
 						if (res) {
-							console.log("Tag already exists.");
+							// console.log("Tag already exists.");
 							existingTag++;
 						} else {
 							Tag.create({
@@ -84,7 +84,7 @@ exports.postPending = function (req, res) {
 								wasAuto: true,
 							})
 								.then(() => {
-									console.log("insert pendingTags");
+									// console.log("insert pendingTags");
 								})
 								.catch((err) => {
 									return res

@@ -908,21 +908,21 @@ exports.getDataInRange = async (req, res) => {
 //////////////////////////////////////////////////////
 /////////// controllers functions helpers ////////////
 //////////////////////////////////////////////////////
-async function getDatetimesDB(user) {
-	let response = GlucoseData.findAll({
-		where: {
-			userId: user.id,
-		},
-		attributes: [
-			[
-				sequelize.fn("DISTINCT", sequelize.col("glucosedata.datetime")),
-				"date",
-			],
-		],
-	});
+// async function getDatetimesDB(user) {
+// 	let response = GlucoseData.findAll({
+// 		where: {
+// 			userId: user.id,
+// 		},
+// 		attributes: [
+// 			[
+// 				sequelize.fn("DISTINCT", sequelize.col("glucosedata.datetime")),
+// 				"date",
+// 			],
+// 		],
+// 	});
 
-	return await response;
-}
+// 	return await response;
+// }
 
 /**
  * -------------
@@ -930,84 +930,135 @@ async function getDatetimesDB(user) {
  * -------------
  *
  * Main function to insert data from the manual import (with CSV file)
+ * /!\ We should normaly use sequelize when checking for already existing data (when inserting insulins)
+ * but it causes some duplicate entry errors, so i choose to use JS instead (with some()).
+ * => some() is more performant than filter(),
+ * => sequelize is more performant than some()
  */
 
 async function insertIfNoDup(dataObj, importName, user) {
+	console.time("insertIfNotDup");
 	let seeDup = 0;
 	let seeInsert = 0;
-	let mostRecentInsulinDatetime = "";
+
+	// Min and max datetime for insulin
+	let mostRecentInsulinDatetime = dataObj.insulinData.reduce((a, b) => {
+		return a.datetime > b.datetime ? a : b;
+	}).datetime;
+	let leastRecentInsulinDatetime = dataObj.insulinData.reduce((a, b) => {
+		return a.datetime < b.datetime ? a : b;
+	}).datetime;
+
+	let DBinsulinDataQuery = await Insulin.findAll({
+		where: {
+			userId: user.id,
+			datetime: {
+				[Op.between]: [
+					leastRecentInsulinDatetime,
+					mostRecentInsulinDatetime,
+				],
+			},
+		},
+	});
+	// Already existing data thta will be used for comparaison
+	let DBinsulinData = DBinsulinDataQuery.map((element) => element.dataValues);
+
 	// Glucose
-	for (let i = 0; i < dataObj.date.length; i++) {
-		let dbFormatDatetime = formatDatetimeFixed(
-			dataObj.date[i],
-			dataObj.time[i]
-		);
+	console.time("insertGlucose");
+	for (let i = 0; i < dataObj.glucoseData.length; i++) {
+		let dbFormatDatetime = dataObj.glucoseData[i].datetime;
 		await GlucoseData.findOne({
 			logging: false,
 			where: {
 				datetime: dbFormatDatetime,
 				userId: user.id,
 			},
-		}).then((res) => {
+		}).then(async (res) => {
 			if (res) {
 				seeDup++;
 			} else {
-				GlucoseData.create({
+				await GlucoseData.create({
 					datetime: dbFormatDatetime,
-					glucose: parseInt(dataObj.glucose[i]),
-					pumpSN: dataObj.pumpSN[i],
+					glucose: parseInt(dataObj.glucoseData[i].glucose),
+					pumpSN: dataObj.glucoseData[i].pumpSN,
 					importName: importName,
 					userId: user.id,
-				}).then(seeInsert++);
+				});
+				seeInsert++;
 			}
 		});
 	}
+	console.timeEnd("insertGlucose");
+
 	// Insulin
-	for (let z = 0; z < dataObj.carbDate.length; z++) {
-		let dbFormatDatetime = formatDatetimeFixed(
-			dataObj.carbDate[z],
-			dataObj.carbTime[z]
-		);
-		if (mostRecentInsulinDatetime) {
-			dbFormatDatetime > mostRecentInsulinDatetime
-				? (mostRecentInsulinDatetime = dbFormatDatetime)
-				: "";
-		} else {
-			mostRecentInsulinDatetime = dbFormatDatetime;
+	let filterTime = 0;
+	console.time("insertInsulin");
+	for (let z = 0; z < dataObj.insulinData.length; z++) {
+		let dbFormatDatetime = dataObj.insulinData[z].datetime;
+
+		let description = {};
+		// Creating description from the type of insulin we are working with
+		switch (dataObj.insulinData[z].type) {
+			case "MEAL":
+				description = JSON.stringify({
+					activationType: "RECOMMENDED",
+					programmedFastAmount: dataObj.insulinData[z].estimateUnits,
+					programmedDuration: 0,
+					deliveredFastAmount: dataObj.insulinData[z].estimateUnits,
+					bolusType: "FAST",
+				});
+				break;
+			case "AUTO_BASAL_DELIVERY":
+				description = JSON.stringify({
+					bolusAmount: dataObj.insulinData[z].bolusDelivered,
+				});
+				break;
+			case "CORRECTION":
+				description = JSON.stringify({
+					activationType: "AUTOCORRECTION",
+					programmedFastAmount: dataObj.insulinData[z].bolusDelivered,
+					programmedDuration: 0,
+					deliveredFastAmount: dataObj.insulinData[z].bolusDelivered,
+					bolusType: "FAST",
+				});
+				break;
 		}
-		let description = JSON.stringify({
-			activationType: "RECOMMENDED",
-			programmedFastAmount: dataObj.estimateUnits[z],
-			programmedDuration: 0,
-			deliveredFastAmount: dataObj.estimateUnits[z],
-			bolusType: "FAST",
+
+		let isPresent = DBinsulinData.some((e) => {
+			return (
+				new Date(e.datetime).toISOString() == dbFormatDatetime &&
+				e.insulinType == dataObj.insulinData[z].type
+			);
 		});
-		await Insulin.findOne({
-			logging: false,
-			where: {
-				datetime: dbFormatDatetime,
-				userId: user.id,
-				insulinType: "MEAL",
-				// { insulinDescr: description },
-			},
-		}).then((res) => {
-			if (res) {
-				seeDup++;
-			} else {
-				try {
-					Insulin.create({
-						datetime: dbFormatDatetime,
-						carbInput: parseInt(dataObj.carbInput[z]),
-						userId: user.id,
-						insulinType: "MEAL",
-						insulinDescr: description,
-					}).then(seeInsert++);
-				} catch (e) {
-					console.log(e);
-				}
+
+		if (isPresent) {
+			seeDup++;
+		} else {
+			try {
+				await Insulin.create({
+					datetime: dbFormatDatetime,
+					carbInput:
+						dataObj.insulinData[z].type === "MEAL"
+							? parseInt(dataObj.insulinData[z].carbInput)
+							: 0,
+					userId: user.id,
+					insulinType: dataObj.insulinData[z].type,
+					insulinDescr: description,
+				});
+				seeInsert++;
+				DBinsulinData.push({
+					insulinType: dataObj.insulinData[z].type,
+					datetime: dbFormatDatetime,
+				});
+			} catch (e) {
+				console.log(e);
+				console.log(DBinsulinData);
+				console.log(dataObj.insulinData[z]);
 			}
-		});
+		}
 	}
+	console.timeEnd("insertInsulin");
+	console.timeEnd("insertIfNotDup");
 	return [seeDup, seeInsert, mostRecentInsulinDatetime];
 }
 /**
@@ -1021,6 +1072,7 @@ async function insertIfNoDup(dataObj, importName, user) {
 function getFromMiniMedPump(req, res, user, importName) {
 	const fileRows = [];
 	// open uploaded file
+	console.time("CSVRead");
 	csv.parseFile(req.file.path, { delimiter: ";" })
 		.on("data", function (data) {
 			fileRows.push(data); // push each row
@@ -1030,14 +1082,8 @@ function getFromMiniMedPump(req, res, user, importName) {
 			////////////////////process "fileRows" and respond
 			// Variables
 			let dataObj = {
-				date: [],
-				time: [],
-				glucose: [],
-				pumpSN: [],
-				carbDate: [],
-				carbTime: [],
-				carbInput: [],
-				estimateUnits: [],
+				glucoseData: [],
+				insulinData: [],
 			};
 			let cols = findInFileRows(fileRows, 0);
 			let colDate = cols.colDate,
@@ -1046,7 +1092,9 @@ function getFromMiniMedPump(req, res, user, importName) {
 				pumpSN = cols.pumpSN,
 				colCarbInput = cols.colCarbInput,
 				colEstimateUnits = cols.colEstimateUnits,
-				colDeliveringStatus = cols.colDeliveringStatus;
+				colDeliveringStatus = cols.colDeliveringStatus,
+				colBolusSource = cols.colBolusSource,
+				colBolusDelivered = cols.colBolusDelivered;
 			// Retrieve date time and glucose rows
 			let i = 0;
 			fileRows.forEach((row) => {
@@ -1060,6 +1108,8 @@ function getFromMiniMedPump(req, res, user, importName) {
 						colCarbInput = cols.colCarbInput;
 						colEstimateUnits = cols.colEstimateUnits;
 						colDeliveringStatus = cols.colDeliveringStatus;
+						colBolusSource = cols.colBolusSource;
+						colBolusDelivered = cols.colBolusDelivered;
 					}
 				}
 				// Glucose
@@ -1073,21 +1123,27 @@ function getFromMiniMedPump(req, res, user, importName) {
 						row[colTime].includes(":") &&
 						row[colGlucose].length >= 2
 					) {
+						// Main object that contains informations about the data
+						let tempGlucoseObj = {};
+						let date = "";
 						if (row[colDate].substr(0, 3).includes("/")) {
 							let dateArray = row[colDate].split("/");
 							const reversed = dateArray.reverse();
-							dataObj.date.push(
-								reversed.toString().replace(/,/g, "/")
-							);
+							date = reversed.toString().replace(/,/g, "/");
 						} else {
-							dataObj.date.push(row[colDate]);
+							date = row[colDate];
 						}
-						dataObj.time.push(row[colTime]);
-						dataObj.glucose.push(row[colGlucose]);
-						dataObj.pumpSN.push(pumpSN);
+						// Creating a complete UTC0 ISO datetime from date and time
+						tempGlucoseObj.datetime = formatDatetimeFixed(
+							date,
+							row[colTime]
+						);
+						tempGlucoseObj.glucose = row[colGlucose];
+						tempGlucoseObj.pumpSN = pumpSN;
+						dataObj.glucoseData.push(tempGlucoseObj);
 					}
 				}
-				// Insulin
+				// MEAL INSULIN
 				if (
 					(typeof row[colCarbInput]).toString() === "string" &&
 					(typeof row[colDate]).toString() === "string" &&
@@ -1099,24 +1155,98 @@ function getFromMiniMedPump(req, res, user, importName) {
 						row[colCarbInput].length > 0 &&
 						row[colDeliveringStatus] === "Delivered"
 					) {
+						// Main object that contains informations about the data
+						let tempInsulinObj = {};
+						let date = "";
+						// Using "MEAL" because this is what is already used in DB for auto import
+						tempInsulinObj.type = "MEAL";
 						if (row[colDate].substr(0, 3).includes("/")) {
 							let dateArray = row[colDate].split("/");
 							const reversed = dateArray.reverse();
-							dataObj.carbDate.push(
-								reversed.toString().replace(/,/g, "/")
-							);
+							date = reversed.toString().replace(/,/g, "/");
 						} else {
-							dataObj.carbDate.push(row[colDate]);
+							date = row[colDate];
 						}
-						dataObj.carbTime.push(row[colTime]);
-						dataObj.carbInput.push(row[colCarbInput]);
-						dataObj.estimateUnits.push(
-							parseFloat(row[colEstimateUnits].replace(/,/g, "."))
+						// Creating a complete UTC0 ISO datetime from date and time
+						tempInsulinObj.datetime = formatDatetimeFixed(
+							date,
+							row[colTime]
 						);
+						tempInsulinObj.carbInput = row[colCarbInput];
+						tempInsulinObj.estimateUnits = parseFloat(
+							row[colEstimateUnits].replace(/,/g, ".")
+						);
+						dataObj.insulinData.push(tempInsulinObj);
+					}
+				}
+				// BASAL AND CORRECTION INSULIN
+				if (
+					(typeof row[colBolusDelivered]).toString() === "string" &&
+					(typeof row[colDate]).toString() === "string" &&
+					(typeof row[colTime]).toString() === "string" &&
+					(typeof row[colBolusSource]).toString() === "string"
+				) {
+					// BASAL INSULIN
+					if (
+						row[colDate].includes("/") &&
+						row[colTime].includes(":") &&
+						row[colBolusDelivered].length > 0 &&
+						row[colBolusSource] === "CLOSED_LOOP_AUTO_BASAL"
+					) {
+						// Main object that contains informations about the data
+						let tempInsulinObj = {};
+						let date = "";
+						// Using "AUTO_BASAL_DELIVERY" because this is what is already used in DB for auto import
+						tempInsulinObj.type = "AUTO_BASAL_DELIVERY";
+						if (row[colDate].substr(0, 3).includes("/")) {
+							let dateArray = row[colDate].split("/");
+							const reversed = dateArray.reverse();
+							date = reversed.toString().replace(/,/g, "/");
+						} else {
+							date = row[colDate];
+						}
+						// Creating a complete UTC0 ISO datetime from date and time
+						tempInsulinObj.datetime = formatDatetimeFixed(
+							date,
+							row[colTime]
+						);
+						tempInsulinObj.bolusDelivered = parseFloat(
+							row[colBolusDelivered].replace(/,/g, ".")
+						);
+						dataObj.insulinData.push(tempInsulinObj);
+					}
+					// Correction insulin
+					else if (
+						row[colDate].includes("/") &&
+						row[colTime].includes(":") &&
+						row[colBolusDelivered].length > 0 &&
+						row[colBolusSource] === "CLOSED_LOOP_AUTO_BOLUS"
+					) {
+						// Main object that contains informations about the data
+						let tempInsulinObj = {};
+						let date = "";
+						// Using "CORRECTION" because this is what is already used in DB for auto import
+						tempInsulinObj.type = "CORRECTION";
+						if (row[colDate].substr(0, 3).includes("/")) {
+							let dateArray = row[colDate].split("/");
+							const reversed = dateArray.reverse();
+							date = reversed.toString().replace(/,/g, "/");
+						} else {
+							date = row[colDate];
+						}
+						// Creating a complete UTC0 ISO datetime from date and time
+						tempInsulinObj.datetime = formatDatetimeFixed(
+							date,
+							row[colTime]
+						);
+						tempInsulinObj.bolusDelivered = parseFloat(
+							row[colBolusDelivered].replace(/,/g, ".")
+						);
+						dataObj.insulinData.push(tempInsulinObj);
 					}
 				}
 			});
-
+			console.timeEnd("CSVRead");
 			try {
 				insertIfNoDup(dataObj, importName, user).then(async (see) => {
 					res.status(200).json({
@@ -1154,6 +1284,8 @@ function getGMT(strDate, strTime, strTimeToCompare) {
 		return GMT;
 	}
 }
+
+// Exporting for tests
 exports.getGMT = getGMT;
 
 /**
@@ -1166,39 +1298,38 @@ exports.getGMT = getGMT;
  * 2022-04-21T01:55:00.000Z
  */
 
-function formatDatetime(strDate, strTime) {
-	let localDatetime = new Date(
-		strDate.substring(0, 4),
-		strDate.substring(5, 7) - 1,
-		strDate.substring(8, 10),
-		strTime.split(":")[0],
-		strTime.split(":")[1]
-	).toLocaleString("be-BE", {
-		timeZone: "CET",
-	});
+// function formatDatetime(strDate, strTime) {
+// 	let localDatetime = new Date(
+// 		strDate.substring(0, 4),
+// 		strDate.substring(5, 7) - 1,
+// 		strDate.substring(8, 10),
+// 		strTime.split(":")[0],
+// 		strTime.split(":")[1]
+// 	).toLocaleString("be-BE", {
+// 		timeZone: "CET",
+// 	});
 
-	let localDate = localDatetime.split(",")[0];
-	let localTime = localDatetime.split(",")[1];
+// 	let localDate = localDatetime.split(",")[0];
+// 	let localTime = localDatetime.split(",")[1];
 
-	let gmt = getGMT(strDate, strTime, localTime);
+// 	let gmt = getGMT(strDate, strTime, localTime);
 
-	let year = parseInt(localDate.split(".")[2]);
-	let month = parseInt(localDate.split(".")[1]);
-	let day = parseInt(localDate.split(".")[0]);
-	let hours = parseInt(strTime.split(":")[0]) + gmt;
-	let minutes = parseInt(strTime.split(":")[1]);
+// 	let year = parseInt(localDate.split(".")[2]);
+// 	let month = parseInt(localDate.split(".")[1]);
+// 	let day = parseInt(localDate.split(".")[0]);
+// 	let hours = parseInt(strTime.split(":")[0]) + gmt;
+// 	let minutes = parseInt(strTime.split(":")[1]);
 
-	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
-	let coeff = 1000 * 60 * 5;
-	let almostFinalDatetime = new Date(
-		Math.trunc(newObjDatetime.getTime() / coeff) * coeff
-	);
-	let isoDate = almostFinalDatetime.toISOString();
-	return isoDate;
-}
+// 	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
+// 	let coeff = 1000 * 60 * 5;
+// 	let almostFinalDatetime = new Date(
+// 		Math.trunc(newObjDatetime.getTime() / coeff) * coeff
+// 	);
+// 	let isoDate = almostFinalDatetime.toISOString();
+// 	return isoDate;
+// }
 
-exports.formatDatetime = formatDatetime;
-
+// Improved version of formatDatetime => Works in DST and when passing from 23:00 to 00:00
 function formatDatetimeFixed(strDate, strTime) {
 	let localServerDatetime = new Date(
 		strDate.substring(0, 4),
@@ -1219,32 +1350,10 @@ function formatDatetimeFixed(strDate, strTime) {
 	);
 	return localServerDatetime.toISOString();
 }
-// Duplicate not used anymore
-// function formatDatetimeWithoutRound(strDate, strTime) {
-// 	let localDatetime = new Date(
-// 		strDate.substring(0, 4),
-// 		strDate.substring(5, 7) - 1,
-// 		strDate.substring(8, 10),
-// 		strTime.split(":")[0],
-// 		strTime.split(":")[1]
-// 	).toLocaleString("be-BE", {
-// 		timeZone: "CET",
-// 	});
-// 	let localDate = localDatetime.split(",")[0];
-// 	let localTime = localDatetime.split(",")[1];
-// 	let gmt = getGMT(strDate, strTime, localTime);
 
-// 	let year = parseInt(localDate.split(".")[2]);
-// 	let month = parseInt(localDate.split(".")[1]);
-// 	let day = parseInt(localDate.split(".")[0]);
-// 	let hours = parseInt(strTime.split(":")[0]) + gmt;
-// 	let minutes = parseInt(strTime.split(":")[1]);
+// Exporting for tests
+exports.formatDatetimeFixed = formatDatetimeFixed;
 
-// 	let newObjDatetime = new Date(year, month - 1, day, hours, minutes);
-
-// 	let isoDate = newObjDatetime.toISOString();
-// 	return isoDate;
-// }
 /**
  * find the column number of time, date and glucose in the filerows array at start line.
  *
@@ -1259,7 +1368,9 @@ function findInFileRows(fileRows, start) {
 		pumpSN = "",
 		colCarbInput = -1,
 		colEstimateUnits = -1,
-		colDeliveringStatus = -1;
+		colDeliveringStatus = -1,
+		colBolusSource = -1,
+		colBolusDelivered = -1;
 	// Find column numbers and pump serial number
 	for (let row = start; row < fileRows.length; row++) {
 		if (
@@ -1269,7 +1380,9 @@ function findInFileRows(fileRows, start) {
 			pumpSN === "" ||
 			colCarbInput < 0 ||
 			colEstimateUnits < 0.0 ||
-			colDeliveringStatus < 0
+			colDeliveringStatus < 0 ||
+			colBolusSource < 0 ||
+			colBolusDelivered < 0.0
 		) {
 			for (let col = 0; col < fileRows[row].length; col++) {
 				if ((typeof fileRows[row][col]).toString() === "string") {
@@ -1312,6 +1425,18 @@ function findInFileRows(fileRows, start) {
 								fileRows[row][col]
 							);
 					}
+					if (colBolusSource < 0) {
+						if (fileRows[row][col] == "Bolus Source")
+							colBolusSource = fileRows[row].indexOf(
+								fileRows[row][col]
+							);
+					}
+					if (colBolusDelivered < 0) {
+						if (fileRows[row][col] == "Bolus Volume Delivered (U)")
+							colBolusDelivered = fileRows[row].indexOf(
+								fileRows[row][col]
+							);
+					}
 				}
 			}
 		} else {
@@ -1326,6 +1451,8 @@ function findInFileRows(fileRows, start) {
 		colCarbInput,
 		colEstimateUnits,
 		colDeliveringStatus,
+		colBolusSource,
+		colBolusDelivered,
 	};
 }
 
