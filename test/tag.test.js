@@ -97,6 +97,8 @@ describe("Testing tags routes", () => {
 			expect(response.status).to.equal(200);
 		});
 
+		it("Testing post and put", () => {});
+
 		it("Testing adding an already existing tag give a 'alreadyexist' message", async () => {
 			let response = await request(server)
 				.post("/api/tags/pending")

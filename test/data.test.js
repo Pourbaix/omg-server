@@ -439,4 +439,35 @@ describe("Testing data controller functions helpers", () => {
 			).to.equal(-6);
 		});
 	});
+	describe("Testing formatDatetimeFixed function helper", () => {
+		it("formatDatetimeFixed with none-DST data", () => {
+			expect(
+				ctrData.formatDatetimeFixed("2023/11/05", "12:00:00")
+			).to.equal("2023-11-05T11:00:00.000Z");
+			expect(
+				ctrData.formatDatetimeFixed("2023/11/05", "00:30:00")
+			).to.equal("2023-11-04T23:30:00.000Z");
+			expect(
+				ctrData.formatDatetimeFixed("2023/11/05", "10:32:10")
+			).to.equal("2023-11-05T09:30:00.000Z");
+			expect(
+				ctrData.formatDatetimeFixed("2023/11/05", "18:57:10")
+			).to.equal("2023-11-05T17:55:00.000Z");
+		});
+		it("formatDatetimeFixed with DST data", () => {
+			expect(
+				ctrData.formatDatetimeFixed("2023/05/05", "12:00:00")
+			).to.equal("2023-05-05T10:00:00.000Z");
+			expect(
+				ctrData.formatDatetimeFixed("2023/05/05", "00:30:00")
+			).to.equal("2023-05-04T22:30:00.000Z");
+			expect(
+				ctrData.formatDatetimeFixed("2023/05/05", "10:32:10")
+			).to.equal("2023-05-05T08:30:00.000Z");
+			expect(
+				ctrData.formatDatetimeFixed("2023/05/05", "18:57:10")
+			).to.equal("2023-05-05T16:55:00.000Z");
+		});
+	});
+	describe("Testing      function helper", () => {});
 });
