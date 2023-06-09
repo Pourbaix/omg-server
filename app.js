@@ -5,14 +5,19 @@ const AutoImportData = require("./models/modelAutoImportData");
 const Insulin = require("./models/modelInsulin");
 const autoImportData = require("./utils/autoImportData");
 
+require("dotenv").config();
+
 /////////////////////////////////////////////////
 // Use helmet to avoid common http security risks
 const helmet = require("helmet");
 app.use(helmet());
-
 /////////////////////////////////////////////////
 
-require("dotenv").config();
+//////////////////////////////////////////////////////////////////////////////////
+// Use ratelimiter to avoid Spamming requests on auth system (brute-force attack)
+const rateLimiterMemoryMiddleware = require("./middleware/rateLimiterMemory");
+app.use(rateLimiterMemoryMiddleware);
+/////////////////////////////////////////////////////////////////////////////////
 
 ////////////////// Cors //////////////////////////////
 const cors = require("cors");
@@ -63,7 +68,6 @@ seq.sequelize
 // 	.then((result) => {
 // 		console.log(result);
 // 	});
-
 //////////////////////////////////////////////////////
 
 ///////////////// Route modules //////////////////////
@@ -85,7 +89,6 @@ console.log("App listening on port 3001!");
 
 /////////////////Auto Import//////////////////////////
 // Execute the import script every 12 hours //
-
 const cron = require("node-cron");
 
 cron.schedule("0 0 0,12 * * *", () => {
@@ -104,7 +107,6 @@ cron.schedule("0 0 0,12 * * *", () => {
 // 	console.log("Running auto import job!");
 // 	autoImportData.autoImportAllUsers();
 // });
-
 //////////////////////////////////////////////////////
 
 module.exports = app;
