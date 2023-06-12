@@ -41,12 +41,23 @@ async function autoImport(userId) {
 	let lastDatetimeImport = userInfo.lastDataUpdate;
 
 	// Ici on récupère les info des 24 dernières heures dans un objet js pour pouvoir faire des comparaisons d'existance après
-	let lastInsulinData = await getLast24HData(0, userId);
+	let leastRecentInsulinDatetime = insulinData
+		.filter((x) => {
+			return x.dateTime;
+		})
+		.reduce((a, b) => {
+			return a.dateTime < b.dateTime ? a : b;
+		}).dateTime;
+	let firstInsulinData = dateUtils.toNormalizedUTCISOStringWithCountry(
+		userInfo.dataValues.country,
+		dateUtils.ISOTo5Minutes(leastRecentInsulinDatetime)
+	);
+	let lastInsulinData = await getLast24HData(0, userId, firstInsulinData);
 	// Insulin
 	for (let e in insulinData) {
 		if (insulinData[e].dateTime) {
 			// Check if data already exists
-			let existCheck = lastInsulinData.filter((x) => {
+			let existCheck = lastInsulinData.some((x) => {
 				let tempDate = new Date();
 				tempDate.setTime(x.datetime.getTime());
 				let type = "";
@@ -62,7 +73,7 @@ async function autoImport(userId) {
 					// && x.insulinDescr == buildAdditionnalData(insulinData[e])
 				);
 			});
-			if (!existCheck.length) {
+			if (!existCheck) {
 				// Insert insulin data in database
 				let additionnalData = {};
 				if (
@@ -149,11 +160,22 @@ async function autoImport(userId) {
 		}
 	}
 	// On récup les données déjà existantes pour éviter les duplicas
-	let lastGlucoseData = await getLast24HData(1, userId);
+	let leastRecentGlucoseDatetime = glucoseData
+		.filter((x) => {
+			return x.datetime && x.sg;
+		})
+		.reduce((a, b) => {
+			return a.datetime < b.datetime ? a : b;
+		}).datetime;
+	let firstGlucoseData = dateUtils.toNormalizedUTCISOStringWithCountry(
+		userInfo.dataValues.country,
+		dateUtils.ISOTo5Minutes(leastRecentGlucoseDatetime)
+	);
+	let lastGlucoseData = await getLast24HData(1, userId, firstGlucoseData);
 	// Glucose
 	for (let i in glucoseData) {
 		if (glucoseData[i].datetime && parseInt(glucoseData[i].sg) != 0) {
-			let existCheck = lastGlucoseData.filter((x) => {
+			let existCheck = lastGlucoseData.some((x) => {
 				let tempDate = new Date();
 				tempDate.setTime(x.datetime.getTime());
 				return (
@@ -164,7 +186,7 @@ async function autoImport(userId) {
 					)
 				);
 			});
-			if (!existCheck.length) {
+			if (!existCheck) {
 				// insert glucose in data base
 				GlocuseData.create({
 					datetime: dateUtils.toNormalizedUTCISOStringWithCountry(
@@ -213,18 +235,24 @@ async function autoImportAllUsers() {
 	return 1;
 }
 
-async function getLast24HData(type, userId) {
+async function getLast24HData(type, userId, first_data = null) {
 	// Retrieves last 24h datas for glucose or insulin in JS object from DB
 
 	if (type > 1 || typeof type != "number") {
 		return [];
 	}
 
-	let targetDateMs = dateUtils.normalizedUTC(new Date().getTime()) - 87200000;
-	let finaleDate = new Date();
-	finaleDate.setTime(targetDateMs);
-	finaleDate.setSeconds(0);
-	finaleDate.setMilliseconds(0);
+	let finaleDate;
+	if (first_data) {
+		finaleDate = new Date(first_data);
+	} else {
+		let targetDateMs =
+			dateUtils.normalizedUTC(new Date().getTime()) - 87200000;
+		finaleDate = new Date();
+		finaleDate.setTime(targetDateMs);
+		finaleDate.setSeconds(0);
+		finaleDate.setMilliseconds(0);
+	}
 	let dataList = [];
 	if (type) {
 		let data = await GlucoseData.findAll({
