@@ -16,7 +16,8 @@ app.use(helmet());
 //////////////////////////////////////////////////////////////////////////////////
 // Use ratelimiter to avoid Spamming requests on auth system (brute-force attack)
 const rateLimiterMemoryMiddleware = require("./middleware/rateLimiterMemory");
-app.use(rateLimiterMemoryMiddleware);
+// app.use(rateLimiterMemoryMiddleware);
+// Disbaled => Crash when validating a lot of tags (Too many requests at one => Maybe try to send all tag to validate with one route)
 /////////////////////////////////////////////////////////////////////////////////
 
 ////////////////// Cors //////////////////////////////
