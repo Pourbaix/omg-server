@@ -61,7 +61,7 @@ describe("Testing user routes", () => {
 				.set({ Authorization: `Bearer ${token}` })
 				.send();
 			expect(response.status).to.equal(200);
-			expect(response.body.status).to.equal("equal");
+			expect(response.body.status).to.equal("ok");
 			expect(response.body.message).to.equal("valid key");
 		});
 	});
