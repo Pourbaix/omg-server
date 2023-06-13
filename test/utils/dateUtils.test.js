@@ -55,8 +55,13 @@ describe("Testing 'hasDST(date: Date, zone: str)' method", () => {
 
 describe("Testing 'normalizedUTC' module", () => {
 	it("Verify that offset is correctly canceled", () => {
-		expect(dateUtils.normalizedUTC(800000)).toBeTruthy();
-		expect(dateUtils.normalizedUTC(800000)).toBeLessThan(800000);
+		if (new Date().getTimezoneOffset() == 0) {
+			expect(dateUtils.normalizedUTC(800000)).toBeTruthy();
+			expect(dateUtils.normalizedUTC(800000)).toBe(800000);
+		} else {
+			expect(dateUtils.normalizedUTC(800000)).toBeTruthy();
+			expect(dateUtils.normalizedUTC(800000)).toBeLessThan(800000);
+		}
 	});
 });
 
