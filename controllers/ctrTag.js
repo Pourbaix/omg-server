@@ -10,6 +10,41 @@ const GlucoseData = require("../models/modelGlucoseData");
 /////////////// Routes controllers ///////////////////
 //////////////////////////////////////////////////////
 
+exports.activateAllPendingTags = function (req, res) {
+	try {
+		passport.authenticate(
+			"local-jwt",
+			{ session: false },
+			function (err, user) {
+				if (err) {
+					return res.status(500).json("Authentication error");
+				}
+				if (!user) {
+					return res.status(401).json("Incorrect token");
+				}
+				Tag.update(
+					{ isPending: 0 },
+					{
+						where: {
+							userId: user.id,
+							isPending: 1,
+						},
+					}
+				)
+					.then(() => {
+						return res.status(200).json("ok");
+					})
+					.catch((err) => {
+						console.log(err);
+						return res.status(500).json("something wrong happened");
+					});
+			}
+		)(req, res);
+	} catch (e) {
+		res.status(500).json(e);
+	}
+};
+
 /**
  *  post one tag route controller. insert an activation tag.
  *

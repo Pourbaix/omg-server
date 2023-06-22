@@ -12,6 +12,9 @@ router.get("/pending", ctrTag.getPendingTags);
 // Edit one tag activation
 router.put("/one", ctrTag.putOne);
 
+// Confirm all pending tags for a user
+router.put("/activateAllPending", ctrTag.activateAllPendingTags);
+
 // Delete one activation tag
 router.delete("/one", ctrTag.deleteOne);
 
